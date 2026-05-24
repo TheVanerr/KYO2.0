@@ -7,6 +7,7 @@
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <style>
   body {
@@ -197,7 +198,61 @@
     transition: background 0.1s, color 0.1s;
   }
   .kasa-ctx-item:hover { background: rgba(91,33,182,0.3); color: #ede9fe; }
+  .hisse-th {
+    padding: 10px 14px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em; color: #34d399; white-space: nowrap; font-weight: 600;
+    border-bottom: 1px solid rgba(71,85,105,0.45); background: rgba(15,23,42,0.7);
+    cursor: pointer; user-select: none;
+  }
+  .hisse-th:hover { color: #6ee7b7; }
+  .hisse-th.dim { color: #334155; cursor: default; }
+  .hisse-td { padding: 10px 14px; font-size: 13px; white-space: nowrap; }
+  .hisse-row { border-bottom: 1px solid rgba(71,85,105,0.18); transition: background 0.12s; }
+  .pos { color: #34d399; }
+  .neg { color: #f87171; }
+  .neu { color: #94a3b8; }
+  .btn-refresh {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px; font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(16,185,129,0.1); border: 1px solid rgba(52,211,153,0.3);
+    color: #6ee7b7; transition: background 0.15s;
+  }
+  .btn-refresh:hover { background: rgba(16,185,129,0.25); }
+  .btn-refresh:disabled { opacity: 0.45; cursor: not-allowed; }
+  .progress-bar-wrap { height: 3px; background: rgba(71,85,105,0.3); border-radius: 2px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg,#10b981,#34d399); border-radius: 2px; transition: width 0.3s ease; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { animation: spin 0.8s linear infinite; }
   .kasa-ctx-separator { height: 1px; background: rgba(71,85,105,0.4); margin: 4px 0; }
+  /* ── ORTAKLIK ── */
+  #ort-table { border-collapse: collapse; }
+  #ort-table th { border: 1px solid rgba(71,85,105,0.4); }
+  #ort-table td { border: 1px solid rgba(71,85,105,0.3); outline: none; cursor: default; transition: background .12s, box-shadow .12s; }
+  #ort-table td:focus { background: rgba(167,139,250,.12) !important; box-shadow: inset 0 0 0 2px rgba(167,139,250,.55); position: relative; z-index: 1; }
+  #ort-table tr:hover td { background: rgba(30,41,59,.35); }
+  #ort-table tr:hover td:focus { background: rgba(167,139,250,.12) !important; }
+  #ort-grid { outline: none; }
+  #ort-row-count::-webkit-outer-spin-button, #ort-row-count::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #ort-row-count { -moz-appearance: textfield; appearance: textfield; }
+  .ort-td { cursor: default; user-select: none; caret-color: transparent; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .ort-td[contenteditable="true"] { cursor: text; user-select: text; caret-color: #c4b5fd; }
+  .ort-td.ort-anchor { background: rgba(109,40,217,.28); border-color: rgba(167,139,250,.45) !important; }
+  .ort-td.ort-range  { background: rgba(109,40,217,.22); border-color: rgba(167,139,250,.45) !important; }
+  #ort-sel-overlay { position: absolute; pointer-events: none; border: 2px solid rgba(192,132,252,.95); box-shadow: 0 0 10px rgba(167,139,250,.6), 0 0 22px rgba(109,40,217,.35); z-index: 10; display: none; }
+  .ort-td.ort-editing { box-shadow: inset 0 0 0 2px rgba(167,139,250,1) !important; background: rgba(91,33,182,.15) !important; }
+  .ort-td.ort-cut { outline: 2px dashed rgba(167,139,250,.6); outline-offset: -2px; }
+  .ort-row:hover .ort-td:not(.ort-anchor):not(.ort-range):not(.ort-editing) { background: rgba(30,41,59,.3); }
+  .ort-row-num { background: rgba(15,23,42,.75); color: #475569; font-size: .68rem; font-family: 'JetBrains Mono',monospace; text-align: center; cursor: pointer; user-select: none; border-right: 1px solid rgba(71,85,105,.5) !important; padding: 0 6px; transition: background .1s, color .1s; }
+  .ort-row-num:hover { background: rgba(91,33,182,.2); color: #a78bfa; }
+  .ort-row-num.ort-row-selected { background: rgba(91,33,182,.38) !important; color: #c4b5fd; }
+  #ort-ctx-menu { position: fixed; z-index: 1000; background: #0f172a; border: 1px solid rgba(167,139,250,.45); border-radius: 8px; box-shadow: 0 8px 28px rgba(0,0,0,.6), 0 0 16px rgba(109,40,217,.2); padding: 4px 0; min-width: 195px; display: none; }
+  .ort-ctx-item { padding: 8px 16px; font-size: .78rem; font-family: 'JetBrains Mono',monospace; color: #cbd5e1; cursor: pointer; transition: background .1s, color .1s; }
+  .ort-ctx-item:hover { background: rgba(91,33,182,.3); color: #ede9fe; }
+  .ort-col-th { position: relative; cursor: default; }
+  .ort-col-del-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); opacity: 0; font-size: 9px; color: #f87171; border: none; background: none; cursor: pointer; padding: 0 3px; line-height: 1; transition: opacity .15s; }
+  .ort-col-th:hover .ort-col-del-btn { opacity: .65; }
+  .ort-col-del-btn:hover { opacity: 1 !important; }
 </style>
   <style>body { box-sizing: border-box; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
@@ -216,6 +271,11 @@
       <div class="ml-1">
        <h1 class="text-lg font-bold text-white tracking-tight">KYO 2.0</h1>
       </div>
+      <div id="ort-view-toggle-wrap" style="display:none;margin-left:10px">
+       <button id="ort-view-toggle" onclick="ortToggleView()" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07);box-shadow:0 0 10px rgba(52,211,153,0.15);min-width:5.5rem" onmouseover="this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)'">
+        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>
+       </button>
+      </div>
      </div>
      <div class="flex items-center gap-3">
       <div id="kasa-header-actions" class="flex items-center gap-2">
@@ -229,6 +289,41 @@
         <i data-lucide="download" class="w-3.5 h-3.5"></i><span>&#x130;&#xe7;eri Aktar</span>
         <input id="kasa-import-input" type="file" accept=".csv,.json" class="hidden" onchange="kasaImport(this)">
        </label>
+      </div>
+      <div id="ort-header-actions" class="flex items-center gap-2" style="display:none">
+       <button id="ort-save-btn" onclick="ortSave()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#22d3ee;border-color:rgba(34,211,238,0.4);background:rgba(34,211,238,0.07);box-shadow:0 0 10px rgba(34,211,238,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(34,211,238,0.45)';this.style.borderColor='rgba(34,211,238,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(34,211,238,0.15)';this.style.borderColor='rgba(34,211,238,0.4)'">
+        <i data-lucide="save" class="w-3.5 h-3.5"></i><span>Kaydet</span>
+       </button>
+       <button onclick="ortExport()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#fb923c;border-color:rgba(251,146,60,0.4);background:rgba(251,146,60,0.07);box-shadow:0 0 10px rgba(251,146,60,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(251,146,60,0.45)';this.style.borderColor='rgba(251,146,60,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(251,146,60,0.15)';this.style.borderColor='rgba(251,146,60,0.4)'">
+        <i data-lucide="upload" class="w-3.5 h-3.5"></i><span>D&#x131;&#x15F;ar&#x131; Aktar</span>
+       </button>
+       <label class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all cursor-pointer" style="color:#f472b6;border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.07);box-shadow:0 0 10px rgba(244,114,182,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(244,114,182,0.45)';this.style.borderColor='rgba(244,114,182,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(244,114,182,0.15)';this.style.borderColor='rgba(244,114,182,0.4)'">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i><span>&#x130;&#xe7;eri Aktar</span>
+        <input id="ort-import-input" type="file" accept=".csv" class="hidden" onchange="ortImport(this)">
+       </label>
+       <button onclick="ortAddCol()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#a78bfa;border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.07);box-shadow:0 0 10px rgba(167,139,250,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(167,139,250,0.45)';this.style.borderColor='rgba(167,139,250,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(167,139,250,0.15)';this.style.borderColor='rgba(167,139,250,0.4)'">
+        <i data-lucide="columns" class="w-3.5 h-3.5"></i><span>S&#xfc;tun Ekle</span>
+       </button>
+      </div>
+      <div id="hisse-header-actions" class="flex items-center gap-2" style="display:none">
+       <div style="position:relative;display:inline-flex;align-items:center">
+        <i data-lucide="search" style="width:13px;height:13px;color:#475569;position:absolute;left:10px;pointer-events:none"></i>
+        <input id="hisse-search" type="text" placeholder="Sembol veya &#x15f;irket..." maxlength="30"
+          oninput="hisseFilter()" autocomplete="off" spellcheck="false"
+          class="mono"
+          style="padding:8px 12px 8px 30px;font-size:12px;background:rgba(15,23,42,0.8);border:1px solid rgba(71,85,105,0.6);color:#e2e8f0;outline:none;width:200px;border-radius:8px;text-transform:uppercase;transition:border-color 0.15s"
+          onfocus="this.style.borderColor='rgba(52,211,153,0.6)'" onblur="this.style.borderColor='rgba(71,85,105,0.6)'" />
+       </div>
+       <span id="hisse-count" class="mono" style="font-size:11px;color:#334155"></span>
+       <span id="hisse-status" class="mono" style="font-size:11px;color:#475569">–</span>
+       <button id="hisse-refresh-btn" onclick="hisseFetchAll()" class="btn-refresh">
+        <i data-lucide="refresh-cw" id="hisse-refresh-icon" class="w-4 h-4"></i>
+        Yenile
+       </button>
+       <div class="flex items-center gap-1 px-3 py-2 rounded-lg mono" style="background:rgba(15,23,42,0.6);border:1px solid rgba(71,85,105,0.5)">
+        <i data-lucide="clock" style="width:13px;height:13px;color:#475569"></i>
+        <span id="hisse-timer" class="mono" style="font-size:11px;color:#64748b;margin-left:4px">–</span>
+       </div>
       </div>
       <button class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition text-sm font-semibold" style="background:rgba(91,33,182,0.2);border-color:rgba(139,92,246,0.5);color:#c4b5fd;box-shadow:0 0 12px rgba(139,92,246,0.25);" onmouseover="this.style.boxShadow='0 0 20px rgba(139,92,246,0.5)';this.style.borderColor='rgba(167,139,250,0.8)';this.style.color='#ede9fe'" onmouseout="this.style.boxShadow='0 0 12px rgba(139,92,246,0.25)';this.style.borderColor='rgba(139,92,246,0.5)';this.style.color='#c4b5fd'">
        <i data-lucide="user" class="w-4 h-4" style="color:#a78bfa"></i>
@@ -264,9 +359,6 @@
    <!-- Main Content Area -->
    <main class="flex-1 overflow-auto p-6 pb-24"><!-- SEÇİM PAGE -->
     <section id="page-kasa" class="page active flex-col gap-6 w-full">
-     <div>
-      <h2 class="text-2xl font-bold tracking-widest" style="color:#22d3ee;text-shadow:0 0 10px #22d3ee,0 0 24px #06b6d4,0 0 44px #0ea5e9;">KASA</h2>
-     </div>
      <div id="kasa-grid" tabindex="0" class="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden" style="outline:none">
       <div class="overflow-x-auto" style="position:relative">
        <div id="kasa-sel-overlay"></div>
@@ -311,18 +403,59 @@
      <div class="placeholder-card rounded-xl p-10 text-center"><i data-lucide="layers" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
       <p class="text-slate-500 mono text-sm">// MİDAS sayfası hazırlanacak</p>
      </div>
-    </section><!-- HİSSE PAGE -->
-    <section id="page-hisse" class="page flex-col gap-6 max-w-5xl mx-auto">
-     <div>
-      <div class="flex items-center gap-2 mb-1"><i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i> <span class="label-tag mono">HİSSE</span>
+    </section>
+    <!-- HİSSE PAGE -->
+    <section id="page-hisse" class="page flex-col gap-4 w-full">
+      <div class="progress-bar-wrap" id="hisse-progress-wrap" style="display:none">
+        <div class="progress-bar-fill" id="hisse-progress-bar" style="width:0%"></div>
       </div>
-      <h2 class="text-3xl font-bold text-white">HİSSE</h2>
-      <p class="text-slate-400 text-sm mt-1">HİSSE sayfası içeriği burada yer alacak.</p>
-      <div class="header-line mt-4"></div>
-     </div>
-     <div class="placeholder-card rounded-xl p-10 text-center"><i data-lucide="trending-up" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-      <p class="text-slate-500 mono text-sm">// HİSSE sayfası hazırlanacak</p>
-     </div>
+      <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(71,85,105,0.35);background:rgba(10,14,26,0.6)">
+        <div style="overflow-x:auto;width:100%">
+          <table style="width:100%;border-collapse:collapse;table-layout:auto">
+            <thead>
+              <tr>
+                <th class="hisse-th dim" style="text-align:center;width:40px">#</th>
+                <th class="hisse-th" style="text-align:left" onclick="toggleSort('sym')"><span id="sort-sym">SEMBOL</span></th>
+                <th class="hisse-th" style="text-align:left" onclick="toggleSort('name')"><span id="sort-name">ŞİRKET</span></th>
+                <th class="hisse-th" style="text-align:right" onclick="toggleSort('price')"><span id="sort-price">FİYAT (₺)</span></th>
+                <th class="hisse-th" style="text-align:right" onclick="toggleSort('chg')"><span id="sort-chg">DEĞİŞİM</span></th>
+                <th class="hisse-th" style="text-align:right" onclick="toggleSort('pct')"><span id="sort-pct">DEĞ.%</span></th>
+                <th class="hisse-th" style="text-align:right" onclick="toggleSort('vol')"><span id="sort-vol">HACİM</span></th>
+                <th class="hisse-th dim" style="text-align:center">SAAT</th>
+              </tr>
+            </thead>
+            <tbody id="hisse-tbody">
+              <tr><td colspan="8" class="mono" style="padding:48px 16px;text-align:center;color:#334155;font-size:13px">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <!-- ORTAKLIK PAGE -->
+    <section id="page-ortaklik" class="page flex-col gap-4 w-full">
+      <div id="ort-table-view" class="flex flex-col gap-4">
+      <div id="ort-grid" tabindex="0" class="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden" style="outline:none">
+        <div class="overflow-x-auto" style="position:relative">
+          <div id="ort-sel-overlay"></div>
+          <table id="ort-table" class="w-full" style="table-layout:fixed">
+            <colgroup id="ort-colgroup"></colgroup>
+            <thead id="ort-thead"></thead>
+            <tbody id="ort-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <button onclick="ortAddRows()" class="mt-2 w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-xs font-semibold mono transition" style="color:#a78bfa;border:1px dashed rgba(139,92,246,0.4);background:transparent;" onmouseover="this.style.background='rgba(91,33,182,0.15)';this.style.borderColor='rgba(167,139,250,0.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(139,92,246,0.4)'">
+        <i data-lucide="plus" class="w-3.5 h-3.5 flex-shrink-0"></i>
+        <span>Sat&#x131;r Ekle</span>
+        <input id="ort-row-count" type="number" min="1" value="1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.stopPropagation();ortAddRows();}" class="w-12 px-1 py-0.5 rounded text-xs font-semibold mono text-center bg-transparent border" style="color:#a78bfa;border:1px solid rgba(139,92,246,0.5);outline:none;" />
+      </button>
+      </div>
+      <div id="ort-chart-view" style="display:none" class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-5">
+        <div id="ort-chart-legend" class="flex flex-wrap gap-2 mb-5"></div>
+        <div style="position:relative;height:420px">
+          <canvas id="ort-chart-canvas"></canvas>
+        </div>
+      </div>
     </section>
    </main><!-- Bottom-Left Navigation -->
    <nav class="fixed bottom-4 left-4 z-50">
@@ -330,6 +463,7 @@
      <button data-page="kasa" class="nav-btn active px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="box" class="w-4 h-4"></i><span>KASA</span></button>
      <button data-page="midas" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i><span>MİDAS</span></button>
      <button data-page="hisse" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="trending-up" class="w-4 h-4"></i><span>HİSSE</span></button>
+     <button data-page="ortaklik" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="users" class="w-4 h-4"></i><span>ORTAKLIK</span></button>
     </div>
    </nav>
   </div>
@@ -639,6 +773,10 @@
       pages.forEach(p => p.classList.remove('active'));
       document.getElementById(`page-${target}`).classList.add('active');
       document.getElementById('kasa-header-actions').style.display = target === 'kasa' ? 'flex' : 'none';
+      document.getElementById('ort-header-actions').style.display = target === 'ortaklik' ? 'flex' : 'none';
+      document.getElementById('ort-view-toggle-wrap').style.display = target === 'ortaklik' ? 'block' : 'none';
+      document.getElementById('hisse-header-actions').style.display = target === 'hisse' ? 'flex' : 'none';
+      if (target === 'hisse') hisseOnActivate();
     });
   });
 
@@ -1085,6 +1223,792 @@
   }
 
   // Initialize icons
+
+  // ══════════════════════════════════════════════════════════════
+  //  HİSSE — BIST Hisse Takip
+  // ══════════════════════════════════════════════════════════════
+  const BIST_ALL = [
+    'AEFES','AFYON','AGESA','AGHOL','AKENR','AKBNK','AKCNS','AKFGY','AKFIN','AKGRT',
+    'AKINV','AKSA','AKSEN','AKSGY','AKSUE','AKTIF','AKYHO','ALARK','ALBRK','ALCAR',
+    'ALCTL','ALFAS','ALKIM','ALKLC','ALMAD','ALTNS','ALTNY','ALYAG','ANACM','ANELE',
+    'ANHYT','ANSGR','ARCLK','ARDYZ','ARENA','ARSAN','ASCEL','ASELS','ASLAN','ASTOR',
+    'ASUZU','ATAGY','ATATP','ATEKS','ATLAS','AVGYO','AVHOL','AVOD','AYCES','AYES',
+    'BAGFS','BASCM','BASGZ','BASMA','BAYRK','BERA','BFREN','BIMAS','BIOEN','BIYOT',
+    'BJKAS','BLCYT','BMEKS','BMSCH','BNTAS','BORLS','BORSK','BOSSA','BRISA','BRKO',
+    'BRKVY','BRMEN','BRNKS','BRYAT','BSOKE','BTCIM','BUCIM','BURCE','BURVA','BUYUK',
+    'CCOLA','CELHA','CEMTS','CEOEM','CIMSA','CLEBI','COIAC','CONSE','COSMO','CRDFA',
+    'CRFSA','CSGYO','CUSAN',
+    'DAGHL','DAGI','DAPGM','DARDL','DENGE','DESA','DESPC','DEVA','DEYLM','DGATE',
+    'DGGYO','DITAS','DIVO','DMSAS','DNISI','DOAS','DOBUR','DOFER','DOGUB','DOKTA',
+    'DOHOL','DORTS','DURDO','DYOBY','DZGYO',
+    'ECILC','ECZYT','EDATA','EDIP','EGEEN','EGEPO','EGPRO','EGSER','EKSUN','EKTES',
+    'EMKEL','EMNIS','ENKAI','ENSEN','EPLAS','ERBOS','ERCB','ERDMR','EREGL','ERGLI',
+    'ESCAR','ESCOM','ESEN','ETGRI','ETYAK','EUHOL','EUPWR','EUREN','EUYO','EYGYO',
+    'FADE','FENER','FMIZP','FORMT','FONET','FORTE','FROTO','FZLGY',
+    'GARAN','GARFA','GEDIK','GEDZA','GENIL','GENTS','GEREL','GLYHO','GMTAS','GOKCE',
+    'GOLTS','GOODY','GOZDE','GRNYO','GRSEL','GSDDE','GSDHO','GSRAY','GUBRF','GUSGR',
+    'GUVEN','GVGYO','GWIND',
+    'HATEK','HALKB','HALKS','HATSN','HEDEF','HEKTS','HLGYO','HMVEF','HOROZ','HRKET','HURGZ',
+    'IEYHO','IGDAS','IHEVA','IHGZT','IHLGM','IHYAY','IMASM','INDES','INFO','INTEM',
+    'IPEKE','IPGYO','ISGSY','ISGYO','ISKPL','ISYAT','ISCTR','ITTFK','IZFAS','IZKUR','IZOCM',
+    'JANTS',
+    'KAREL','KARSN','KARTN','KATMR','KAYSE','KBORU','KCAER','KCHOL','KENT','KEPEZ',
+    'KERVT','KFEIN','KGYO','KLGYO','KLMSN','KNFRT','KONYA','KONTR','KOPOL','KORDS',
+    'KOZA','KOZAA','KRDMA','KRDMB','KRDMD','KRTEK','KTLEV','KTSKR','KUTPO',
+    'LIDER','LKMNH','LOGO',
+    'MACKO','MAKIM','MAKTK','MANAS','MAPOL','MARTI','MAVI','MEDTR','MEGMT','MEKAG',
+    'MEPA','MERCN','MERIT','MERKO','METRO','MGROS','MIELS','MMCAS','MNDRS','MOGAN',
+    'MPARK','MSGYO','MTRKS','MTRYO',
+    'NATEN','NETAS','NIBAS','NTGAZ','NTTUR','NUGYO','NUHCM',
+    'ODAS','OFSYM','ONCSM','ONER','ORGE','ORMA','OSTIM','OTKAR','OTTO','OYLUM',
+    'OZBAL','OZKGY','OZRDN','OZSUB',
+    'PAGYO','PAPIL','PARSN','PEKGY','PENGD','PENTA','PETKM','PETUN','PGSUS','PINSU',
+    'PKART','PKENT','PLTUR','PNSUT','POLHO','POLTK','PRDGS','PRPOL','PSDTC','PTOFS',
+    'QNBFB','QNBFL',
+    'RALYH','RAYSG','REDR','RGYAS','RODRG','ROYAL','RUBNS',
+    'SAFKN','SAHOL','SAMAT','SANEL','SANFM','SANKO','SARKY','SASA','SAYAS','SDTTR',
+    'SEKFK','SEKUR','SELEC','SELVA','SENTE','SILVR','SISE','SKBNK','SKTAS','SMART',
+    'SNGYO','SNKRN','SODSN','SOKM','SRVGY','SUMAS','SUNUS','SURGY','SUWEN',
+    'TABGD','TATGD','TAVHL','TCELL','TDGYO','TEKTU','TEZOL','THYAO','TKFEN','TKNSA',
+    'TLMAN','TMPOL','TNZTP','TOASO','TRCAS','TRGYO','TRILC','TSGYO','TSKB','TSPOR',
+    'TTKOM','TTRAK','TUCLK','TUKAS','TUMAS','TUPRS','TURGG','TURSG','TVORX','TYHOL',
+    'ULKER','ULUSE','ULUUN','UNLU','URTEKS','USAK','USDMR',
+    'VAKBN','VAKFN','VAKGM','VANGD','VBTYZ','VERUS','VESBE','VESTL','VKFYO','VKGYO',
+    'YATAS','YATRM','YBTAS','YGYO','YIGIT','YKBNK','YKSLN','YONGA','YUNSA',
+    'ZEDUR','ZOREN','ZRGYO'
+  ];
+
+  const HISSE_BATCH = 20;
+  let hisseData = {};
+  let hisseFilter_q = '';
+  let sortCol = 'sym', sortAsc = true;
+  let hisseCountdown = 60;
+  let hisseCountdownTimer = null;
+  let hisseLoadedBatches = 0, hisseTotalBatches = 0;
+  let hisseInited = false;
+
+  function fmt(n, d) {
+    if (n == null || isNaN(n)) return '\u2013';
+    return n.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function fmtVol(n) {
+    if (!n) return '\u2013';
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toLocaleString('tr-TR');
+  }
+  function fmtTime(ts) {
+    if (!ts) return '\u2013';
+    return new Date(ts * 1000).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function toggleSort(col) {
+    if (sortCol === col) { sortAsc = !sortAsc; }
+    else { sortCol = col; sortAsc = col === 'sym' || col === 'name'; }
+    ['sym','name','price','chg','pct','vol'].forEach(c => {
+      const el = document.getElementById('sort-' + c);
+      if (!el) return;
+      const labels = { sym:'SEMBOL', name:'\u015e\u0130RKET', price:'F\u0130YAT (\u20ba)', chg:'DE\u011e\u0130\u015e\u0130M', pct:'DE\u011e.%', vol:'HAC\u0130M' };
+      el.textContent = c === sortCol ? labels[c] + (sortAsc ? ' \u2191' : ' \u2193') : labels[c];
+    });
+    hisseRenderTable();
+  }
+
+  function hisseFilter() {
+    hisseFilter_q = (document.getElementById('hisse-search').value || '').toUpperCase().trim();
+    hisseRenderTable();
+  }
+
+  function hisseRenderTable() {
+    const tbody = document.getElementById('hisse-tbody');
+    if (!tbody) return;
+    let rows = Object.values(hisseData);
+    if (hisseFilter_q) {
+      rows = rows.filter(d => {
+        const sym = (d.symbol || '').replace(/\.IS$/i, '');
+        const name = (d.shortName || d.longName || '').toUpperCase();
+        return sym.includes(hisseFilter_q) || name.includes(hisseFilter_q);
+      });
+    }
+    rows.sort((a, b) => {
+      let va, vb;
+      const sa = (a.symbol || '').replace(/\.IS$/i, '');
+      const sb = (b.symbol || '').replace(/\.IS$/i, '');
+      if (sortCol === 'sym')   { va = sa; vb = sb; }
+      else if (sortCol === 'name')  { va = (a.shortName || a.longName || sa).toUpperCase(); vb = (b.shortName || b.longName || sb).toUpperCase(); }
+      else if (sortCol === 'price') { va = a.regularMarketPrice || 0; vb = b.regularMarketPrice || 0; }
+      else if (sortCol === 'chg')   { va = a.regularMarketChange || 0; vb = b.regularMarketChange || 0; }
+      else if (sortCol === 'pct')   { va = a.regularMarketChangePercent || 0; vb = b.regularMarketChangePercent || 0; }
+      else if (sortCol === 'vol')   { va = a.regularMarketVolume || 0; vb = b.regularMarketVolume || 0; }
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ? 1 : -1;
+      return 0;
+    });
+    const count = document.getElementById('hisse-count');
+    if (count) count.textContent = rows.length > 0 ? rows.length + ' hisse' : '';
+    if (rows.length === 0) {
+      const msg = Object.keys(hisseData).length === 0 ? 'Y\u00fckleniyor\u2026' : 'E\u015fle\u015fen hisse bulunamad\u0131.';
+      tbody.innerHTML = '<tr><td colspan="8" class="mono" style="padding:48px 16px;text-align:center;color:#334155;font-size:13px">' + msg + '</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map((d, i) => {
+      const sym = (d.symbol || '').replace(/\.IS$/i, '');
+      const company = d.shortName || d.longName || sym;
+      const chg = d.regularMarketChange;
+      const chgPct = d.regularMarketChangePercent;
+      const isPos = chg > 0, isNeg = chg < 0;
+      const cc = isPos ? 'pos' : isNeg ? 'neg' : 'neu';
+      const arrow = isPos ? '\u25b2 ' : isNeg ? '\u25bc ' : '';
+      const chgStr = (isPos ? '+' : '') + fmt(chg, 2);
+      const chgPctStr = (isPos ? '+' : '') + fmt(chgPct, 2) + '%';
+      const bg = i % 2 === 0 ? 'rgba(10,14,26,0.55)' : 'rgba(20,30,50,0.35)';
+      const bgh = 'rgba(16,185,129,0.07)';
+      return '<tr class="hisse-row" style="background:' + bg + '" onmouseover="this.style.background=\'' + bgh + '\'" onmouseout="this.style.background=\'' + bg + '\'">' +
+        '<td class="hisse-td mono" style="text-align:center;font-size:11px;color:#334155">' + (i+1) + '</td>' +
+        '<td class="hisse-td mono" style="font-weight:700;color:#6ee7b7;font-size:14px">' + sym + '</td>' +
+        '<td class="hisse-td" style="color:#94a3b8;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + company + '">' + company + '</td>' +
+        '<td class="hisse-td mono" style="text-align:right;font-weight:700;color:#e2e8f0;font-size:14px">' + fmt(d.regularMarketPrice, 2) + '</td>' +
+        '<td class="hisse-td mono ' + cc + '" style="text-align:right;font-weight:600">' + arrow + chgStr + '</td>' +
+        '<td class="hisse-td mono ' + cc + '" style="text-align:right;font-weight:700">' + chgPctStr + '</td>' +
+        '<td class="hisse-td mono" style="text-align:right;color:#64748b;font-size:12px">' + fmtVol(d.regularMarketVolume) + '</td>' +
+        '<td class="hisse-td mono" style="text-align:center;color:#475569;font-size:12px">' + fmtTime(d.regularMarketTime) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function parseYahooSpark(json) {
+    if (!json || typeof json !== 'object') return [];
+    return Object.entries(json).map(([symbol, v]) => {
+      if (!v || !v.close || !v.close.length) return null;
+      const closes = v.close;
+      const price = closes[closes.length - 1];
+      const prev = v.chartPreviousClose || (closes.length > 1 ? closes[closes.length - 2] : price);
+      if (!price || price <= 0) return null;
+      const change = price - prev;
+      const changePct = prev > 0 ? (change / prev * 100) : 0;
+      const ts = v.timestamp ? v.timestamp[v.timestamp.length - 1] : null;
+      return {
+        symbol: symbol,
+        shortName: symbol.replace(/\.IS$/i, ''),
+        longName: symbol.replace(/\.IS$/i, ''),
+        regularMarketPrice: price,
+        regularMarketChange: change,
+        regularMarketChangePercent: changePct,
+        regularMarketVolume: 0,
+        regularMarketTime: ts
+      };
+    }).filter(Boolean);
+  }
+
+  async function hisseFetchBatch(symbols) {
+    const symsYahoo = symbols.map(s => s + '.IS').join(',');
+    const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/spark?symbols=' + symsYahoo + '&range=5d&interval=1d';
+
+    // Proxy denemeleri: CORS sorunu icin
+    const attempts = [
+      // 1. Yerel Python proxy (python proxy.py calisiyorsa - en guvenilir)
+      'http://127.0.0.1:8765/' + yahooUrl,
+      // 2. thingproxy
+      'https://thingproxy.freeboard.io/fetch/' + yahooUrl,
+      // 3. codetabs proxy
+      'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(yahooUrl),
+      // 4. corsproxy.io
+      'https://corsproxy.io/?' + encodeURIComponent(yahooUrl),
+    ];
+
+    for (const url of attempts) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 10000);
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (!r.ok) continue;
+        const json = await r.json();
+        const result = parseYahooSpark(json);
+        if (result.length > 0) return result;
+      } catch(e) { /* sonraki proxy */ }
+    }
+    return [];
+  }
+
+  async function hisseFetchAll() {
+    const btn = document.getElementById('hisse-refresh-btn');
+    const icon = document.getElementById('hisse-refresh-icon');
+    const status = document.getElementById('hisse-status');
+    const pw = document.getElementById('hisse-progress-wrap');
+    const pb = document.getElementById('hisse-progress-bar');
+    if (btn) btn.disabled = true;
+    if (icon) icon.classList.add('spinning');
+    if (pw) pw.style.display = 'block';
+    if (pb) pb.style.width = '0%';
+    hisseData = {};
+    hisseLoadedBatches = 0;
+    const batches = [];
+    for (let i = 0; i < BIST_ALL.length; i += HISSE_BATCH) batches.push(BIST_ALL.slice(i, i + HISSE_BATCH));
+    hisseTotalBatches = batches.length;
+    if (status) status.textContent = '0 / ' + BIST_ALL.length + ' arand\u0131...';
+    await Promise.all(batches.map(async (batch) => {
+      const quotes = await hisseFetchBatch(batch);
+      quotes.forEach(q => {
+        if (q && q.regularMarketPrice != null) {
+          const sym = (q.symbol || '').replace(/\.IS$/i, '');
+          hisseData[sym] = q;
+        }
+      });
+      hisseLoadedBatches++;
+      const done = Math.min(hisseLoadedBatches * HISSE_BATCH, BIST_ALL.length);
+      if (status) status.textContent = done + ' / ' + BIST_ALL.length + ' arand\u0131...';
+      if (pb) pb.style.width = Math.round((hisseLoadedBatches / hisseTotalBatches) * 100) + '%';
+      hisseRenderTable();
+    }));
+    if (btn) btn.disabled = false;
+    if (icon) icon.classList.remove('spinning');
+    if (pb) { pb.style.width = '100%'; setTimeout(() => { if (pw) pw.style.display = 'none'; }, 600); }
+    const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const n = Object.keys(hisseData).length;
+    if (status) status.textContent = 'son: ' + now + ' \u2014 ' + n + ' hisse';
+    hisseRenderTable();
+    hisseResetCountdown();
+    lucide.createIcons();
+  }
+
+  function hisseResetCountdown() {
+    hisseCountdown = 60;
+    if (hisseCountdownTimer) clearInterval(hisseCountdownTimer);
+    const el = document.getElementById('hisse-timer');
+    if (el) el.textContent = hisseCountdown + 's';
+    hisseCountdownTimer = setInterval(() => {
+      hisseCountdown--;
+      const el2 = document.getElementById('hisse-timer');
+      if (el2) el2.textContent = hisseCountdown + 's';
+      if (hisseCountdown <= 0) { clearInterval(hisseCountdownTimer); hisseFetchAll(); }
+    }, 1000);
+  }
+
+  // HİSSE sayfasına geçince otomatik yükle
+  function hisseOnActivate() {
+    if (!hisseInited) { hisseInited = true; hisseFetchAll(); }
+  }
+
+  // ── ORTAKLIK Spreadsheet ───────────────────────────────────────
+  // Korunan: index 0 (TARİH), son-2 (SERMAYE), son-1 (TUTAR)
+  // Silinebilir: index 1 .. length-3 (C-H arası kişi sütunları)
+  let ortColumns = ['TAR\u0130H','MER\u0130\u00c7','FAT\u0130H','MERTCAN','MERT CAN','AS\u0130YE','ERK\u0130N','SERMAYE','TUTAR'];
+  let ortRowCount = 0;
+  let oSel = null, oSelEnd = null, oEditCell = null;
+  let oClip = null, oCutCells = [];
+  let oRowSelMode = false, oCtxTargetRow = null, ortDelColTarget = -1;
+
+  function ortIsDeleteable(i) { return i >= 1 && i <= ortColumns.length - 3; }
+
+  function ortCell(r, c) {
+    return document.querySelector(`#ort-tbody td[data-row="${r}"][data-col="${c}"]`);
+  }
+
+  function ortRebuildHeader() {
+    const cg = document.getElementById('ort-colgroup');
+    const thead = document.getElementById('ort-thead');
+    const n = ortColumns.length;
+    const w = Math.floor(96 / n);
+    let cgHtml = '<col style="width:4%">';
+    for (let i = 0; i < n; i++) cgHtml += `<col style="width:${w}%">`;
+    cg.innerHTML = cgHtml;
+    let thHtml = '<tr style="background:rgba(30,41,59,0.4)"><th class="px-2 py-3 text-center text-xs font-semibold mono" style="color:#334155;border-right:1px solid rgba(71,85,105,0.5)">#</th>';
+    for (let i = 0; i < n; i++) {
+      const canDel = ortIsDeleteable(i);
+      thHtml += `<th class="ort-col-th px-3 py-3 text-center text-xs font-semibold mono uppercase tracking-wider" data-col="${i}" style="color:#a78bfa;white-space:nowrap"><span>${ortColumns[i]}</span>`;
+      if (canDel) thHtml += `<button class="ort-col-del-btn" onclick="event.stopPropagation();ortShowDeleteCol(${i})" title="${ortColumns[i]} s\u00fctununu sil">\u2715</button>`;
+      thHtml += '</th>';
+    }
+    thHtml += '</tr>';
+    thead.innerHTML = thHtml;
+  }
+
+  function ortRenumberCols() {
+    document.querySelectorAll('#ort-tbody .ort-row').forEach(row => {
+      row.querySelectorAll('.ort-td').forEach((td, i) => { td.dataset.col = i; });
+    });
+  }
+
+  function ortCreateRow() {
+    const r = ortRowCount++;
+    const row = document.createElement('tr');
+    row.className = 'ort-row';
+    const numTd = document.createElement('td');
+    numTd.className = 'ort-row-num';
+    numTd.textContent = '\u2013';
+    row.appendChild(numTd);
+    for (let c = 0; c < ortColumns.length; c++) {
+      const td = document.createElement('td');
+      td.dataset.row = r; td.dataset.col = c;
+      td.className = 'ort-td px-3 py-2 text-sm text-slate-300 mono text-center';
+      td.style.height = '36px'; td.style.overflow = 'hidden';
+      row.appendChild(td);
+    }
+    return row;
+  }
+
+  function ortAddRow() { document.getElementById('ort-tbody').appendChild(ortCreateRow()); ortRenumberRows(); }
+
+  function ortAddRows() {
+    const n = Math.max(1, parseInt(document.getElementById('ort-row-count').value) || 1);
+    for (let i = 0; i < n; i++) document.getElementById('ort-tbody').appendChild(ortCreateRow());
+    ortRenumberRows(); lucide.createIcons();
+  }
+
+  function ortRenumberRows() {
+    document.querySelectorAll('#ort-tbody .ort-row').forEach((row, i) => {
+      const n = row.querySelector('.ort-row-num'); if (n) n.textContent = i + 1;
+    });
+  }
+
+  function ortHighlight() {
+    document.querySelectorAll('#ort-tbody .ort-td').forEach(td => td.classList.remove('ort-anchor','ort-range'));
+    document.querySelectorAll('#ort-tbody .ort-row-num').forEach(td => td.classList.remove('ort-row-selected'));
+    if (!oSel) { ortUpdateOverlay(); return; }
+    const r1=Math.min(oSel.r,(oSelEnd||oSel).r), r2=Math.max(oSel.r,(oSelEnd||oSel).r);
+    const c1=Math.min(oSel.c,(oSelEnd||oSel).c), c2=Math.max(oSel.c,(oSelEnd||oSel).c);
+    for (let r=r1; r<=r2; r++) {
+      for (let c=c1; c<=c2; c++) {
+        const td=ortCell(r,c); if(!td) continue;
+        td.classList.add(r===oSel.r&&c===oSel.c?'ort-anchor':'ort-range');
+      }
+      if (oRowSelMode) { const fd=ortCell(r,0); if(fd){const nt=fd.closest('tr').querySelector('.ort-row-num');if(nt)nt.classList.add('ort-row-selected');} }
+    }
+    ortUpdateOverlay();
+  }
+
+  function ortUpdateOverlay() {
+    const ol=document.getElementById('ort-sel-overlay');
+    if (!ol||!oSel) { if(ol) ol.style.display='none'; return; }
+    const r1=Math.min(oSel.r,(oSelEnd||oSel).r), r2=Math.max(oSel.r,(oSelEnd||oSel).r);
+    const c1=Math.min(oSel.c,(oSelEnd||oSel).c), c2=Math.max(oSel.c,(oSelEnd||oSel).c);
+    const tl=ortCell(r1,c1), br=ortCell(r2,c2);
+    if (!tl||!br) { ol.style.display='none'; return; }
+    const cont=ol.parentElement, cR=cont.getBoundingClientRect(), tlR=tl.getBoundingClientRect(), brR=br.getBoundingClientRect();
+    ol.style.display='block';
+    ol.style.left=(tlR.left-cR.left+cont.scrollLeft)+'px';
+    ol.style.top=(tlR.top-cR.top+cont.scrollTop)+'px';
+    ol.style.width=(brR.right-tlR.left)+'px';
+    ol.style.height=(brR.bottom-tlR.top)+'px';
+  }
+
+  function ortEnterEdit(td, clear) {
+    if (!td||oEditCell===td) return;
+    ortExitEdit(); oEditCell=td; td.contentEditable='true'; td.classList.add('ort-editing');
+    if (clear) td.textContent='';
+    td.focus();
+    if (!clear) { const rng=document.createRange(); rng.selectNodeContents(td); rng.collapse(false); window.getSelection().removeAllRanges(); window.getSelection().addRange(rng); }
+  }
+  function ortExitEdit() { if(!oEditCell) return; oEditCell.contentEditable='false'; oEditCell.classList.remove('ort-editing'); oEditCell=null; }
+
+  function ortMoveSel(dr, dc, extend) {
+    if (!oSel) return;
+    const ref=extend?(oSelEnd||oSel):oSel;
+    let nr=Math.max(0,ref.r+dr), nc=Math.max(0,Math.min(ortColumns.length-1,ref.c+dc));
+    while (nr>=ortRowCount) ortAddRow();
+    if (extend) { oSelEnd={r:nr,c:nc}; } else { oSel={r:nr,c:nc}; oSelEnd=null; }
+    ortHighlight();
+  }
+
+  function ortClearSel() {
+    if (!oSel) return;
+    const r1=Math.min(oSel.r,(oSelEnd||oSel).r), r2=Math.max(oSel.r,(oSelEnd||oSel).r);
+    const c1=Math.min(oSel.c,(oSelEnd||oSel).c), c2=Math.max(oSel.c,(oSelEnd||oSel).c);
+    for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) { const t=ortCell(r,c); if(t) t.textContent=''; }
+  }
+
+  function ortCopy(cut) {
+    if (!oSel) return;
+    const r1=Math.min(oSel.r,(oSelEnd||oSel).r), r2=Math.max(oSel.r,(oSelEnd||oSel).r);
+    const c1=Math.min(oSel.c,(oSelEnd||oSel).c), c2=Math.max(oSel.c,(oSelEnd||oSel).c);
+    const data=[];
+    for (let r=r1;r<=r2;r++) { const row=[]; for (let c=c1;c<=c2;c++) { const t=ortCell(r,c); row.push(t?t.textContent:''); } data.push(row); }
+    oCutCells.forEach(t=>t.classList.remove('ort-cut')); oCutCells=[];
+    oClip={data,cut};
+    if (cut) { for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) { const t=ortCell(r,c); if(t){t.classList.add('ort-cut');oCutCells.push(t);} } }
+  }
+
+  function ortPaste() {
+    if (!oClip||!oSel) return;
+    const{data,cut}=oClip; const sr=oSel.r,sc=oSel.c;
+    while (ortRowCount<sr+data.length) ortAddRow();
+    for (let dr=0;dr<data.length;dr++) for (let dc=0;dc<data[dr].length;dc++) { if(sc+dc>=ortColumns.length)continue; const t=ortCell(sr+dr,sc+dc); if(t) t.textContent=data[dr][dc]; }
+    if (cut) { oCutCells.forEach(t=>{t.textContent='';t.classList.remove('ort-cut');}); oCutCells=[]; oClip=null; }
+  }
+
+  // ── Sütun yönetimi ────────────────────────────────────────────
+  function ortAddCol() {
+    const name = prompt('Yeni s\u00fctun ad\u0131 (SERMAYE\u2019dan \u00f6nce eklenecek):','');
+    if (name===null||!name.trim()) return;
+    const col = name.trim().toUpperCase();
+    const insertAt = ortColumns.length - 2;
+    ortColumns.splice(insertAt, 0, col);
+    document.querySelectorAll('#ort-tbody .ort-row').forEach(row => {
+      const cells = row.querySelectorAll('.ort-td');
+      const rowIdx = cells.length>0 ? +cells[0].dataset.row : 0;
+      const td = document.createElement('td');
+      td.dataset.row = rowIdx; td.dataset.col = insertAt;
+      td.className = 'ort-td px-3 py-2 text-sm text-slate-300 mono text-center';
+      td.style.height='36px'; td.style.overflow='hidden';
+      if (cells[insertAt]) row.insertBefore(td, cells[insertAt]); else row.appendChild(td);
+    });
+    ortRenumberCols(); ortRebuildHeader();
+    oSel=null; oSelEnd=null; ortHighlight(); lucide.createIcons();
+  }
+
+  function ortShowDeleteCol(colIndex) {
+    if (!ortIsDeleteable(colIndex)) return;
+    ortDelColTarget = colIndex;
+    const name = ortColumns[colIndex];
+    document.getElementById('ort-del-col-name').textContent = name;
+    document.getElementById('ort-del-col-required').textContent = name + ' silmeyi onayl\u0131yorum';
+    document.getElementById('ort-del-col-input').value = '';
+    document.getElementById('ort-del-col-input').style.borderColor = 'rgba(71,85,105,0.5)';
+    const btn = document.getElementById('ort-del-col-confirm');
+    btn.disabled=true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed';
+    document.getElementById('ort-del-col-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('ort-del-col-input').focus(), 50);
+  }
+
+  function ortDelColCheck() {
+    if (ortDelColTarget < 0) return;
+    const name = ortColumns[ortDelColTarget];
+    const required = name + ' silmeyi onayl\u0131yorum';
+    const typed = document.getElementById('ort-del-col-input').value;
+    const ok = typed === required;
+    const btn = document.getElementById('ort-del-col-confirm');
+    btn.disabled=!ok; btn.style.opacity=ok?'1':'0.4'; btn.style.cursor=ok?'pointer':'not-allowed';
+    const inp = document.getElementById('ort-del-col-input');
+    inp.style.borderColor = typed&&ok ? 'rgba(52,211,153,0.6)' : typed&&!ok ? 'rgba(239,68,68,0.5)' : 'rgba(71,85,105,0.5)';
+  }
+
+  function ortCancelDeleteCol() {
+    document.getElementById('ort-del-col-modal').style.display = 'none';
+    ortDelColTarget = -1;
+  }
+
+  function ortConfirmDeleteCol() {
+    if (ortDelColTarget < 0) return;
+    const name = ortColumns[ortDelColTarget];
+    if (document.getElementById('ort-del-col-input').value !== name + ' silmeyi onayl\u0131yorum') return;
+    const colIdx = ortDelColTarget;
+    ortColumns.splice(colIdx, 1);
+    document.querySelectorAll('#ort-tbody .ort-row').forEach(row => {
+      const cells = row.querySelectorAll('.ort-td');
+      if (cells[colIdx]) cells[colIdx].remove();
+    });
+    ortRenumberCols(); ortRebuildHeader();
+    document.getElementById('ort-del-col-modal').style.display = 'none';
+    ortDelColTarget = -1; oSel=null; oSelEnd=null; ortHighlight();
+  }
+
+  // ── Grid olayları ─────────────────────────────────────────────
+  const ortGrid = document.getElementById('ort-grid');
+  let oDragging = false;
+
+  ortGrid.addEventListener('mousedown', e => {
+    const numTd = e.target.closest('#ort-tbody .ort-row-num');
+    if (numTd) {
+      if (oEditCell) ortExitEdit();
+      const fd = numTd.closest('tr').querySelector('.ort-td'); if(!fd) return;
+      const r = +fd.dataset.row;
+      if (e.shiftKey&&oSel&&oRowSelMode) { oSelEnd={r,c:ortColumns.length-1}; oSel={r:oSel.r,c:0}; }
+      else { oSel={r,c:0}; oSelEnd={r,c:ortColumns.length-1}; }
+      oRowSelMode=true; ortHighlight(); ortGrid.focus(); oDragging=true; e.preventDefault(); return;
+    }
+    const td = e.target.closest('#ort-tbody .ort-td');
+    if (!td) { if(oEditCell){ortExitEdit();ortHighlight();} return; }
+    if (oEditCell&&oEditCell!==td) ortExitEdit();
+    oRowSelMode=false;
+    const r=+td.dataset.row, c=+td.dataset.col;
+    if (e.shiftKey&&oSel) { oSelEnd={r,c}; } else { oSel={r,c}; oSelEnd=null; }
+    ortHighlight(); ortGrid.focus(); oDragging=true; e.preventDefault();
+  });
+
+  document.addEventListener('mouseover', e => {
+    if (!oDragging||!oSel) return;
+    if (oRowSelMode) {
+      const el=e.target.closest('#ort-tbody .ort-row-num')||e.target.closest('#ort-tbody .ort-td');
+      if (!el) return; const fd=el.closest('tr').querySelector('.ort-td'); if(!fd) return;
+      oSelEnd={r:+fd.dataset.row,c:ortColumns.length-1}; oSel={r:oSel.r,c:0};
+    } else {
+      const td=e.target.closest('#ort-tbody .ort-td'); if(!td) return;
+      oSelEnd={r:+td.dataset.row,c:+td.dataset.col};
+    }
+    ortHighlight();
+  });
+
+  document.addEventListener('mouseup', () => { oDragging = false; });
+
+  ortGrid.addEventListener('dblclick', e => {
+    const td=e.target.closest('#ort-tbody .ort-td'); if(!td) return;
+    oSel={r:+td.dataset.row,c:+td.dataset.col}; oSelEnd=null; ortHighlight(); ortEnterEdit(td,false);
+  });
+
+  ortGrid.addEventListener('keydown', e => {
+    if (oEditCell) {
+      if (e.key==='Escape'){e.preventDefault();ortExitEdit();ortHighlight();ortGrid.focus();}
+      else if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();ortExitEdit();ortMoveSel(1,0,false);ortGrid.focus();}
+      else if (e.key==='Tab'){e.preventDefault();ortExitEdit();ortMoveSel(0,e.shiftKey?-1:1,false);ortGrid.focus();}
+      return;
+    }
+    if (!oSel) return;
+    if (e.ctrlKey||e.metaKey) {
+      if (e.key==='c'){e.preventDefault();ortCopy(false);}
+      else if (e.key==='x'){e.preventDefault();ortCopy(true);}
+      else if (e.key==='v'){e.preventDefault();ortPaste();}
+      return;
+    }
+    const arrows={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
+    if (arrows[e.key]){e.preventDefault();ortMoveSel(...arrows[e.key],e.shiftKey);return;}
+    if (e.key==='Delete'||e.key==='Backspace'){e.preventDefault();if(oRowSelMode)ortDeleteSelectedRows();else ortClearSel();return;}
+    if (e.key==='F2'){e.preventDefault();ortEnterEdit(ortCell(oSel.r,oSel.c),false);return;}
+    if (e.key==='Enter'){e.preventDefault();ortEnterEdit(ortCell(oSel.r,oSel.c),false);return;}
+    if (e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey) ortEnterEdit(ortCell(oSel.r,oSel.c),true);
+  });
+
+  // ── Satır işlemleri ───────────────────────────────────────────
+  function ortDeleteSelectedRows() {
+    if (!oSel) return;
+    const r1=Math.min(oSel.r,(oSelEnd||oSel).r), r2=Math.max(oSel.r,(oSelEnd||oSel).r);
+    for (let r=r1;r<=r2;r++) { const td=ortCell(r,0); if(td) td.closest('tr').remove(); }
+    oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight(); ortRenumberRows();
+  }
+  function ortCtxInsertAbove() {
+    document.getElementById('ort-ctx-menu').style.display='none';
+    if (oCtxTargetRow===null) return;
+    const r1=oSel?Math.min(oSel.r,(oSelEnd||oSel).r):oCtxTargetRow;
+    const refTd=ortCell(r1,0); if(!refTd) return;
+    document.getElementById('ort-tbody').insertBefore(ortCreateRow(),refTd.closest('tr'));
+    ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight();
+  }
+  function ortCtxInsertBelow() {
+    document.getElementById('ort-ctx-menu').style.display='none';
+    if (oCtxTargetRow===null) return;
+    const r2=oSel?Math.max(oSel.r,(oSelEnd||oSel).r):oCtxTargetRow;
+    const refTd=ortCell(r2,0); if(!refTd) return;
+    document.getElementById('ort-tbody').insertBefore(ortCreateRow(),refTd.closest('tr').nextSibling);
+    ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight();
+  }
+  function ortCtxDeleteRows() { document.getElementById('ort-ctx-menu').style.display='none'; ortDeleteSelectedRows(); }
+
+  ortGrid.addEventListener('contextmenu', e => {
+    const numTd=e.target.closest('#ort-tbody .ort-row-num'); if(!numTd) return;
+    e.preventDefault();
+    const fd=numTd.closest('tr').querySelector('.ort-td'); if(!fd) return;
+    const r=+fd.dataset.row;
+    const r1=oSel&&oRowSelMode?Math.min(oSel.r,(oSelEnd||oSel).r):r+1;
+    const r2=oSel&&oRowSelMode?Math.max(oSel.r,(oSelEnd||oSel).r):r-1;
+    if (!oRowSelMode||r<r1||r>r2) { oSel={r,c:0}; oSelEnd={r,c:ortColumns.length-1}; oRowSelMode=true; ortHighlight(); }
+    oCtxTargetRow=r;
+    const menu=document.getElementById('ort-ctx-menu');
+    menu.style.display='block'; menu.style.left=e.clientX+'px'; menu.style.top=e.clientY+'px';
+    setTimeout(()=>{ const rect=menu.getBoundingClientRect(); if(rect.right>window.innerWidth)menu.style.left=(e.clientX-rect.width)+'px'; if(rect.bottom>window.innerHeight)menu.style.top=(e.clientY-rect.height)+'px'; },0);
+  });
+
+  document.addEventListener('click', e => {
+    const om=document.getElementById('ort-ctx-menu'); if(om&&!om.contains(e.target)) om.style.display='none';
+    const dm=document.getElementById('ort-del-col-modal'); if(dm&&dm.style.display==='flex'&&e.target===dm) ortCancelDeleteCol();
+  });
+
+  // ── Kaydet / Aktar / İçeri Al ─────────────────────────────────
+  function ortGetData() {
+    const rows=[];
+    document.querySelectorAll('#ort-tbody .ort-row').forEach(row => {
+      const cells=row.querySelectorAll('.ort-td'); rows.push([...cells].map(td=>td.textContent));
+    });
+    return { columns: ortColumns.slice(), rows };
+  }
+  function ortSave() {
+    localStorage.setItem('ort-data', JSON.stringify(ortGetData()));
+    const btn=document.getElementById('ort-save-btn');
+    const orig=btn.style.boxShadow; btn.style.boxShadow='0 0 24px rgba(34,211,238,0.8)';
+    setTimeout(()=>btn.style.boxShadow=orig, 800);
+  }
+  function ortExport() {
+    const{columns,rows}=ortGetData();
+    const csv=[columns.join(','),...rows.map(r=>r.map(c=>`"${c.replace(/"/g,'""')}"`).join(','))].join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+    a.download='ortaklik-'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+  function ortImport(input) {
+    const file=input.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const parseCsv=line=>{ const r=[]; let cur='',inQ=false; for(const ch of line+','){if(ch==='"'){if(inQ&&line[line.indexOf(ch)+1]==='"'){cur+='"';}else inQ=!inQ;}else if(ch===','&&!inQ){r.push(cur);cur='';}else cur+=ch;} return r; };
+      const lines=e.target.result.replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
+      if (!lines.length) return;
+      const cols=parseCsv(lines[0]); if(cols.length>0){ortColumns=cols;ortRebuildHeader();}
+      const tbody=document.getElementById('ort-tbody'); tbody.innerHTML=''; ortRowCount=0;
+      lines.slice(1).forEach(line=>{ const cv=parseCsv(line); const row=ortCreateRow(); row.querySelectorAll('.ort-td').forEach((td,i)=>{if(cv[i]!==undefined)td.textContent=cv[i];}); tbody.appendChild(row); });
+      ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight();
+    };
+    reader.readAsText(file,'utf-8'); input.value='';
+  }
+
+  // ── İlklendirme ───────────────────────────────────────────────
+  ortRebuildHeader();
+  for (let i=0; i<15; i++) ortAddRow();
+
+  (function(){
+    const saved=localStorage.getItem('ort-data'); if(!saved) return;
+    try {
+      const{columns,rows}=JSON.parse(saved);
+      if(columns&&columns.length){ortColumns=columns;ortRebuildHeader();}
+      const tbody=document.getElementById('ort-tbody'); tbody.innerHTML=''; ortRowCount=0;
+      rows.forEach(cols=>{const row=ortCreateRow();row.querySelectorAll('.ort-td').forEach((td,i)=>{if(cols[i]!==undefined)td.textContent=cols[i];});tbody.appendChild(row);});
+      ortRenumberRows();
+    } catch(e){}
+  })();
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="ort-ctx-menu">
+      <div class="ort-ctx-item" onclick="ortCtxInsertAbove()">&uarr; &Uuml;st&uuml;ne Sat&#x131;r Ekle</div>
+      <div class="ort-ctx-item" onclick="ortCtxInsertBelow()">&darr; Alt&#x131;na Sat&#x131;r Ekle</div>
+      <div class="kasa-ctx-separator"></div>
+      <div class="ort-ctx-item" style="color:#f87171" onclick="ortCtxDeleteRows()">&#x2715; Sat&#x131;r&#x131; Sil</div>
+    </div>
+    <div id="ort-del-col-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.78);backdrop-filter:blur(5px);align-items:center;justify-content:center">
+      <div style="background:#0f172a;border:1px solid rgba(239,68,68,0.5);border-radius:14px;padding:28px 32px;min-width:380px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.85),0 0 32px rgba(239,68,68,0.12)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:20px;line-height:1">&#x26A0;&#xFE0F;</span>
+          <h3 style="color:#f87171;font-size:0.95rem;font-weight:700;font-family:'JetBrains Mono',monospace">"<span id="ort-del-col-name"></span>" S&uuml;tunu Silinecek</h3>
+        </div>
+        <p style="color:#64748b;font-size:0.8rem;margin-bottom:6px;font-family:'JetBrains Mono',monospace;line-height:1.6">Bu i&#x15F;lem geri al&#x131;namaz. Devam etmek i&#xe7;in tam olarak &#x15F;unu yaz&#x131;n:</p>
+        <p id="ort-del-col-required" style="color:#94a3b8;font-size:0.82rem;font-family:'JetBrains Mono',monospace;margin-bottom:14px;font-style:italic;word-break:break-all"></p>
+        <input id="ort-del-col-input" type="text" autocomplete="off" spellcheck="false"
+          oninput="ortDelColCheck()"
+          onkeydown="if(event.key==='Enter')ortConfirmDeleteCol();else if(event.key==='Escape')ortCancelDeleteCol();"
+          style="width:100%;padding:10px 14px;background:rgba(15,23,42,0.85);border:1px solid rgba(71,85,105,0.5);border-radius:8px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:0.82rem;outline:none;box-sizing:border-box;transition:border-color 0.15s" />
+        <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+          <button onclick="ortCancelDeleteCol()" style="padding:8px 20px;border-radius:8px;border:1px solid rgba(71,85,105,0.5);background:transparent;color:#94a3b8;font-family:'JetBrains Mono',monospace;font-size:0.78rem;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='rgba(71,85,105,0.2)'" onmouseout="this.style.background='transparent'">&Iptal;</button>
+          <button id="ort-del-col-confirm" onclick="ortConfirmDeleteCol()" disabled style="padding:8px 20px;border-radius:8px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.1);color:#f87171;font-family:'JetBrains Mono',monospace;font-size:0.78rem;cursor:not-allowed;opacity:0.4;transition:all 0.15s">Sil</button>
+        </div>
+      </div>
+    </div>`);
+
+  // ── ORTAKLIK Grafik / Veri toggle ──────────────────────────
+  let ortChartMode = false;
+  let ortChartInstance = null;
+
+  const ORT_CHART_COLORS = [
+    {bg:'rgba(167,139,250,0.75)', border:'rgba(167,139,250,1)'},
+    {bg:'rgba(192,132,252,0.75)', border:'rgba(192,132,252,1)'},
+    {bg:'rgba(139,92,246,0.75)',  border:'rgba(139,92,246,1)'},
+    {bg:'rgba(216,180,254,0.75)', border:'rgba(216,180,254,1)'},
+    {bg:'rgba(124,58,237,0.75)',  border:'rgba(124,58,237,1)'},
+    {bg:'rgba(245,208,254,0.75)', border:'rgba(245,208,254,1)'},
+    {bg:'rgba(34,211,238,0.75)',  border:'rgba(34,211,238,1)'},
+    {bg:'rgba(52,211,153,0.75)',  border:'rgba(52,211,153,1)'},
+    {bg:'rgba(251,146,60,0.75)',  border:'rgba(251,146,60,1)'},
+  ];
+
+  function ortParseNum(str) {
+    if (!str || !str.trim()) return null;
+    const n = parseFloat(str.replace(/[^\d.,-]/g,'').replace(',','.'));
+    return isNaN(n) ? null : n;
+  }
+
+  function ortToggleView() {
+    ortChartMode = !ortChartMode;
+    const tv = document.getElementById('ort-table-view');
+    const cv = document.getElementById('ort-chart-view');
+    const btn = document.getElementById('ort-view-toggle');
+    if (ortChartMode) {
+      tv.style.display = 'none';
+      cv.style.display = 'block';
+      btn.innerHTML = '<i data-lucide="table-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Veri</span>';
+      btn.style.color='#a78bfa'; btn.style.borderColor='rgba(167,139,250,0.4)'; btn.style.background='rgba(167,139,250,0.07)'; btn.style.boxShadow='0 0 10px rgba(167,139,250,0.15)';
+      btn.onmouseover=function(){this.style.boxShadow='0 0 18px rgba(167,139,250,0.45)';this.style.borderColor='rgba(167,139,250,0.75)';};
+      btn.onmouseout=function(){this.style.boxShadow='0 0 10px rgba(167,139,250,0.15)';this.style.borderColor='rgba(167,139,250,0.4)';};
+      lucide.createIcons();
+      ortRenderChart();
+    } else {
+      cv.style.display = 'none';
+      tv.style.display = 'flex';
+      btn.innerHTML = '<i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>';
+      btn.style.color='#34d399'; btn.style.borderColor='rgba(52,211,153,0.4)'; btn.style.background='rgba(52,211,153,0.07)'; btn.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';
+      btn.onmouseover=function(){this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)';};
+      btn.onmouseout=function(){this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)';};
+      lucide.createIcons();
+    }
+  }
+
+  function ortRenderChart() {
+    const rows = [...document.querySelectorAll('#ort-tbody .ort-row')];
+    const labels = rows.map(r => { const td = r.querySelector('.ort-td[data-col="0"]'); return td ? td.textContent.trim() : ''; });
+    // Collect datasets for columns 1..end, skip entirely-empty columns
+    const numCols = ortColumns.length;
+    const datasets = [];
+    for (let c = 1; c < numCols; c++) {
+      const vals = rows.map(r => { const td = r.querySelector(`.ort-td[data-col="${c}"]`); return td ? ortParseNum(td.textContent) : null; });
+      if (vals.every(v => v === null)) continue;
+      const ci = (c - 1) % ORT_CHART_COLORS.length;
+      datasets.push({
+        label: ortColumns[c],
+        data: vals,
+        backgroundColor: ORT_CHART_COLORS[ci].bg,
+        borderColor: ORT_CHART_COLORS[ci].border,
+        borderWidth: 1.5,
+        borderRadius: 4,
+        borderSkipped: false,
+      });
+    }
+    // Legend
+    const legend = document.getElementById('ort-chart-legend');
+    legend.innerHTML = datasets.map((ds, i) => `<button class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs mono font-semibold transition-all" data-ds="${i}" onclick="ortToggleDataset(this,${i})" style="color:#e2e8f0;background:${ds.backgroundColor};border:1px solid ${ds.borderColor};box-shadow:0 0 8px ${ds.borderColor.replace('1)','0.35)')}">${ds.label}</button>`).join('');
+    // Chart
+    if (ortChartInstance) { ortChartInstance.destroy(); ortChartInstance = null; }
+    const ctx = document.getElementById('ort-chart-canvas').getContext('2d');
+    ortChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,0.95)',
+            borderColor: 'rgba(167,139,250,0.5)',
+            borderWidth: 1,
+            titleColor: '#c4b5fd',
+            bodyColor: '#cbd5e1',
+            titleFont: { family: '\'JetBrains Mono\', monospace', size: 11 },
+            bodyFont: { family: '\'JetBrains Mono\', monospace', size: 11 },
+            padding: 10,
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toLocaleString('tr-TR') : '-'}`,
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color:'#64748b', font:{ family:'\'JetBrains Mono\', monospace', size:10 } },
+            grid:  { color:'rgba(71,85,105,0.2)' },
+          },
+          y: {
+            ticks: { color:'#64748b', font:{ family:'\'JetBrains Mono\', monospace', size:10 } },
+            grid:  { color:'rgba(71,85,105,0.2)' },
+          }
+        }
+      }
+    });
+  }
+
+  function ortToggleDataset(btn, idx) {
+    if (!ortChartInstance) return;
+    const meta = ortChartInstance.getDatasetMeta(idx);
+    meta.hidden = !meta.hidden;
+    btn.style.opacity = meta.hidden ? '0.3' : '1';
+    ortChartInstance.update();
+  }
+
   lucide.createIcons();
 
   // Initialize Element SDK
