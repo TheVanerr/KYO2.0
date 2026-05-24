@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="tr" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elektrik Panosu IO Listesi</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: #0a0e1a;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+      linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+    color: #e2e8f0;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .page { display: none; }
+  .page.active { display: flex; }
+  .nav-btn {
+    transition: all 0.2s ease;
+  }
+  .nav-btn.active {
+    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(109, 40, 217, 0.25);
+    color: white;
+    text-shadow: 0 0 8px rgba(196, 181, 253, 0.6);
+  }
+  .nav-btn:not(.active):hover {
+    background: rgba(91, 33, 182, 0.2);
+    border-color: rgba(139, 92, 246, 0.4);
+    color: #c4b5fd;
+  }
+  .option-btn {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.15), transparent);
+    transition: left 0.5s ease;
+  }
+  .option-btn:hover::before { left: 100%; }
+  .option-btn:hover {
+    border-color: rgba(14, 165, 233, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.2);
+  }
+  .option-btn:active { transform: translateY(0); }
+  .label-tag {
+    color: #64748b;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .value-tag {
+    color: #22d3ee;
+    font-weight: 700;
+  }
+  .header-line {
+    background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.5), transparent);
+    height: 1px;
+  }
+  .badge-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .placeholder-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px dashed rgba(71, 85, 105, 0.5);
+  }
+  #kasa-table {
+    border-collapse: collapse;
+  }
+  #kasa-table th {
+    border: 1px solid rgba(71, 85, 105, 0.4);
+  }
+  #kasa-table td {
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    outline: none;
+    cursor: default;
+    transition: background 0.12s ease, box-shadow 0.12s ease;
+  }
+  #kasa-table td:focus {
+    background: rgba(91, 33, 182, 0.12) !important;
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.55);
+    position: relative;
+    z-index: 1;
+  }
+  #kasa-table tr:hover td {
+    background: rgba(30, 41, 59, 0.35);
+  }
+  #kasa-table tr:hover td:focus {
+    background: rgba(91, 33, 182, 0.12) !important;
+  }
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+  #kasa-row-count::-webkit-outer-spin-button,
+  #kasa-row-count::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #kasa-row-count { -moz-appearance: textfield; appearance: textfield; }
+  #kasa-grid { outline: none; }
+  .kasa-td {
+    cursor: default;
+    user-select: none;
+    caret-color: transparent;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .kasa-td[contenteditable="true"] {
+    cursor: text;
+    user-select: text;
+    caret-color: #c4b5fd;
+  }
+  .kasa-td.kasa-anchor {
+    background: rgba(109,40,217,0.28);
+    border-color: rgba(139,92,246,0.45) !important;
+  }
+  .kasa-td.kasa-range {
+    background: rgba(109,40,217,0.22);
+    border-color: rgba(139,92,246,0.45) !important;
+  }
+  #kasa-sel-overlay {
+    position: absolute;
+    pointer-events: none;
+    border: 2px solid rgba(192,132,252,0.95);
+    box-shadow: 0 0 10px rgba(167,139,250,0.6), 0 0 22px rgba(109,40,217,0.35);
+    z-index: 10;
+    display: none;
+  }
+  .kasa-td.kasa-editing {
+    box-shadow: inset 0 0 0 2px rgba(167,139,250,1) !important;
+    background: rgba(91,33,182,0.15) !important;
+  }
+  .kasa-td.kasa-cut {
+    outline: 2px dashed rgba(167,139,250,0.6);
+    outline-offset: -2px;
+  }
+  .kasa-row:hover .kasa-td:not(.kasa-anchor):not(.kasa-range):not(.kasa-editing) {
+    background: rgba(30,41,59,0.3);
+  }
+  .kasa-row-num {
+    background: rgba(15,23,42,0.75);
+    color: #475569;
+    font-size: 0.68rem;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    border-right: 1px solid rgba(71,85,105,0.5) !important;
+    padding: 0 6px;
+    transition: background 0.1s, color 0.1s;
+  }
+  .kasa-row-num:hover { background: rgba(91,33,182,0.2); color: #a78bfa; }
+  .kasa-row-num.kasa-row-selected { background: rgba(91,33,182,0.38) !important; color: #c4b5fd; }
+  #kasa-ctx-menu {
+    position: fixed;
+    z-index: 1000;
+    background: #0f172a;
+    border: 1px solid rgba(139,92,246,0.45);
+    border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6), 0 0 16px rgba(109,40,217,0.2);
+    padding: 4px 0;
+    min-width: 195px;
+    display: none;
+  }
+  .kasa-ctx-item {
+    padding: 8px 16px;
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+  }
+  .kasa-ctx-item:hover { background: rgba(91,33,182,0.3); color: #ede9fe; }
+  .kasa-ctx-separator { height: 1px; background: rgba(71,85,105,0.4); margin: 4px 0; }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full w-full">
+  <div class="h-full w-full flex flex-col"><!-- Top Header -->
+   <header class="px-6 py-4 border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-sm">
+    <div class="flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <button onclick="toggleSidebar()" id="menu-toggle-btn" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition flex-shrink-0">
+       <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-500/30 flex-shrink-0">
+       <span class="text-lg font-bold text-white mono">$</span>
+      </div>
+      <div class="ml-1">
+       <h1 class="text-lg font-bold text-white tracking-tight">KYO 2.0</h1>
+      </div>
+     </div>
+     <div class="flex items-center gap-3">
+      <div id="kasa-header-actions" class="flex items-center gap-2">
+       <button onclick="kasaSave()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#22d3ee;border-color:rgba(34,211,238,0.4);background:rgba(34,211,238,0.07);box-shadow:0 0 10px rgba(34,211,238,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(34,211,238,0.45)';this.style.borderColor='rgba(34,211,238,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(34,211,238,0.15)';this.style.borderColor='rgba(34,211,238,0.4)'">
+        <i data-lucide="save" class="w-3.5 h-3.5"></i><span>Kaydet</span>
+       </button>
+       <button onclick="kasaExport()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#fb923c;border-color:rgba(251,146,60,0.4);background:rgba(251,146,60,0.07);box-shadow:0 0 10px rgba(251,146,60,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(251,146,60,0.45)';this.style.borderColor='rgba(251,146,60,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(251,146,60,0.15)';this.style.borderColor='rgba(251,146,60,0.4)'">
+        <i data-lucide="upload" class="w-3.5 h-3.5"></i><span>D&#x131;&#x15F;ar&#x131; Aktar</span>
+       </button>
+       <label class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all cursor-pointer" style="color:#f472b6;border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.07);box-shadow:0 0 10px rgba(244,114,182,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(244,114,182,0.45)';this.style.borderColor='rgba(244,114,182,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(244,114,182,0.15)';this.style.borderColor='rgba(244,114,182,0.4)'">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i><span>&#x130;&#xe7;eri Aktar</span>
+        <input id="kasa-import-input" type="file" accept=".csv,.json" class="hidden" onchange="kasaImport(this)">
+       </label>
+      </div>
+      <button class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition text-sm font-semibold" style="background:rgba(91,33,182,0.2);border-color:rgba(139,92,246,0.5);color:#c4b5fd;box-shadow:0 0 12px rgba(139,92,246,0.25);" onmouseover="this.style.boxShadow='0 0 20px rgba(139,92,246,0.5)';this.style.borderColor='rgba(167,139,250,0.8)';this.style.color='#ede9fe'" onmouseout="this.style.boxShadow='0 0 12px rgba(139,92,246,0.25)';this.style.borderColor='rgba(139,92,246,0.5)';this.style.color='#c4b5fd'">
+       <i data-lucide="user" class="w-4 h-4" style="color:#a78bfa"></i>
+       <span>Kullan&#x131;c&#x131; Giri&#x15F;i</span>
+      </button>
+     </div>
+    </div>
+   </header>
+   <!-- Sidebar Overlay -->
+   <div id="sidebar-overlay" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm hidden" onclick="toggleSidebar()"></div>
+   <!-- Sidebar -->
+   <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 z-50 bg-slate-900/95 border-r border-slate-700/60 shadow-2xl">
+    <div class="p-6">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-bold text-white">Menü</h2>
+      <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+       <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+     </div>
+     <nav class="flex flex-col gap-2">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition text-sm font-medium">
+       <i data-lucide="home" class="w-4 h-4 text-cyan-400"></i> Ana Sayfa
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition text-sm font-medium">
+       <i data-lucide="settings" class="w-4 h-4 text-cyan-400"></i> Ayarlar
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition text-sm font-medium">
+       <i data-lucide="info" class="w-4 h-4 text-cyan-400"></i> Hakkında
+      </a>
+     </nav>
+    </div>
+   </aside>
+   <!-- Main Content Area -->
+   <main class="flex-1 overflow-auto p-6 pb-24"><!-- SEÇİM PAGE -->
+    <section id="page-kasa" class="page active flex-col gap-6 w-full">
+     <div>
+      <h2 class="text-2xl font-bold tracking-widest" style="color:#22d3ee;text-shadow:0 0 10px #22d3ee,0 0 24px #06b6d4,0 0 44px #0ea5e9;">KASA</h2>
+     </div>
+     <div id="kasa-grid" tabindex="0" class="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden" style="outline:none">
+      <div class="overflow-x-auto" style="position:relative">
+       <div id="kasa-sel-overlay"></div>
+       <table id="kasa-table" class="w-full" style="table-layout:fixed">
+        <colgroup>
+         <col style="width:4%">
+         <col style="width:14%">
+         <col style="width:12%">
+         <col style="width:33%">
+         <col style="width:24%">
+         <col style="width:13%">
+        </colgroup>
+        <thead>
+         <tr class="bg-slate-800/40">
+          <th class="px-2 py-3 text-center text-xs font-semibold mono" style="color:#334155;border-right:1px solid rgba(71,85,105,0.5)">#</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TARİH</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TUTAR</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">İŞLEM</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">KİŞİ</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TUTAR</th>
+         </tr>
+        </thead>
+        <tbody id="kasa-tbody">
+        </tbody>
+       </table>
+      </div>
+     </div>
+     <button onclick="kasaAddRows()" class="mt-2 w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-xs font-semibold mono transition" style="color:#a78bfa;border:1px dashed rgba(139,92,246,0.4);background:transparent;" onmouseover="this.style.background='rgba(91,33,182,0.15)';this.style.borderColor='rgba(167,139,250,0.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(139,92,246,0.4)'">
+      <i data-lucide="plus" class="w-3.5 h-3.5 flex-shrink-0"></i>
+      <span>Satır Ekle</span>
+      <input id="kasa-row-count" type="number" min="1" value="1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.stopPropagation();kasaAddRows();}" class="w-12 px-1 py-0.5 rounded text-xs font-semibold mono text-center bg-transparent border" style="color:#a78bfa;border:1px solid rgba(139,92,246,0.5);outline:none;" />
+     </button>
+    </section><!-- MİDAS PAGE -->
+    <section id="page-midas" class="page flex-col gap-6 max-w-5xl mx-auto">
+     <div>
+      <div class="flex items-center gap-2 mb-1"><i data-lucide="layers" class="w-4 h-4 text-yellow-400"></i> <span class="label-tag mono">MİDAS</span>
+      </div>
+      <h2 class="text-3xl font-bold text-white">MİDAS</h2>
+      <p class="text-slate-400 text-sm mt-1">MİDAS sayfası içeriği burada yer alacak.</p>
+      <div class="header-line mt-4"></div>
+     </div>
+     <div class="placeholder-card rounded-xl p-10 text-center"><i data-lucide="layers" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+      <p class="text-slate-500 mono text-sm">// MİDAS sayfası hazırlanacak</p>
+     </div>
+    </section><!-- HİSSE PAGE -->
+    <section id="page-hisse" class="page flex-col gap-6 max-w-5xl mx-auto">
+     <div>
+      <div class="flex items-center gap-2 mb-1"><i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i> <span class="label-tag mono">HİSSE</span>
+      </div>
+      <h2 class="text-3xl font-bold text-white">HİSSE</h2>
+      <p class="text-slate-400 text-sm mt-1">HİSSE sayfası içeriği burada yer alacak.</p>
+      <div class="header-line mt-4"></div>
+     </div>
+     <div class="placeholder-card rounded-xl p-10 text-center"><i data-lucide="trending-up" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+      <p class="text-slate-500 mono text-sm">// HİSSE sayfası hazırlanacak</p>
+     </div>
+    </section>
+   </main><!-- Bottom-Left Navigation -->
+   <nav class="fixed bottom-4 left-4 z-50">
+    <div class="bg-slate-900/90 backdrop-blur-md border border-slate-700/60 rounded-xl p-1.5 shadow-2xl shadow-black/50 flex gap-1">
+     <button data-page="kasa" class="nav-btn active px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="box" class="w-4 h-4"></i><span>KASA</span></button>
+     <button data-page="midas" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i><span>MİDAS</span></button>
+     <button data-page="hisse" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="trending-up" class="w-4 h-4"></i><span>HİSSE</span></button>
+    </div>
+   </nav>
+  </div>
+  <script>
+  // State
+  const state = {
+    makineTipi: 'Kabinli', // Kabinli <-> Konveyör
+    tankSayisi: 1, // 1,2,3,4
+    otomatikDolum: 'VAR', // VAR <-> YOK
+    saltGrubu: 'Schneider', // Schneider <-> Siemens
+    motors: [] // Motor listesi
+  };
+
+  const motorGrubuOptions = {
+    'Pompa': { icon: 'droplet', color: '#0ea5e9', label: 'Pompa' },
+    'Redüktör': { icon: 'cog', color: '#8b5cf6', label: 'Redüktör' },
+    'Fan': { icon: 'wind', color: '#06b6d4', label: 'Fan' }
+  };
+
+  const motorAdiOptions = {
+    'Pompa': [
+      { adi: 'Ön Yıkama Pompa Motoru', kod: 'PE01' },
+      { adi: 'Yıkama Pompa Motoru', kod: 'PE02' },
+      { adi: 'Ön Durulama Pompa Motoru', kod: 'PE03' },
+      { adi: 'Durulama Pompa Motoru', kod: 'PE04' },
+      { adi: 'Otomatik Drenaj Pompası Motoru', kod: 'PE05' },
+      { adi: 'Vakum Pompası Motoru', kod: 'PE06' },
+      { adi: 'Hücre Boşaltma Pompası Motoru', kod: 'PE07' },
+      { adi: 'Arıtma Gidiş Pompası Motoru', kod: 'PE08' },
+      { adi: 'Arıtma Dönüş Pompası Motoru', kod: 'PE09' },
+      { adi: '1. Dozaj Pompası Motoru', kod: 'PE10' },
+      { adi: '2. Dozaj Pompası Motoru', kod: 'PE11' },
+      { adi: '3. Dozaj Pompası Motoru', kod: 'PE12' },
+      { adi: 'Hassas Filtre Pompası Motoru', kod: 'PE13' },
+      { adi: 'Yağ Ayırıcı Pompası Motoru', kod: 'PE14' },
+      { adi: 'xxx Pompası Motoru', kod: 'PE15' }
+    ],
+    'Redüktör': [
+      { adi: 'Sepet Redüktörü Motoru', kod: 'GE01' },
+      { adi: 'Tambur Redüktörü Motoru', kod: 'GE02' },
+      { adi: 'Otomatik Yükleme Motoru', kod: 'GE03' },
+      { adi: 'Kapı Redüktörü Motoru', kod: 'GE04' },
+      { adi: '1. Konveyör Redüktörü Motoru', kod: 'GE05' },
+      { adi: '1. Yağ Sıyırıcı Redüktörü Motoru', kod: 'GE06' },
+      { adi: '2. Yağ Sıyırıcı Redüktörü Motoru', kod: 'GE07' },
+      { adi: '1. Yükleme Redüktör Motoru', kod: 'GE08' },
+      { adi: '2. Yükleme Redüktör Motoru', kod: 'GE09' },
+      { adi: 'xxx Redüktör Motoru', kod: 'GE10' }
+    ],
+    'Fan': [
+      { adi: 'Egzos Fanı Motoru', kod: 'FE01' },
+      { adi: '1. Kurutma Fanı Motoru', kod: 'FE02' },
+      { adi: '2. Kurutma Fanı Motoru', kod: 'FE03' },
+      { adi: '1. Blower Motoru', kod: 'FE04' },
+      { adi: '2. Blower Motoru', kod: 'FE05' },
+      { adi: '3. Blower Motoru', kod: 'FE06' },
+      { adi: '4. Blower Motoru', kod: 'FE07' },
+      { adi: 'xx Fan Motoru', kod: 'FE08' },
+      { adi: 'xxx Fan Motoru', kod: 'FE09' },
+      { adi: 'xxxx Fan Motoru', kod: 'FE10' }
+    ]
+  };
+
+  // Motor dropdown modal
+  function createMotorGrubuDropdown(motorId, currentValue, triggerBtn) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm';
+    
+    const content = document.createElement('div');
+    content.className = 'absolute bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-4 w-72';
+    
+    // Position relative to button
+    const rect = triggerBtn.getBoundingClientRect();
+    content.style.top = (rect.bottom + 4) + 'px';
+    content.style.left = Math.max(8, rect.left) + 'px';
+    content.style.maxWidth = 'calc(100vw - 16px)';
+    
+    const title = document.createElement('h3');
+    title.className = 'text-sm font-bold text-white mb-3';
+    title.textContent = 'Motor Grubu';
+    content.appendChild(title);
+    
+    const grid = document.createElement('div');
+    grid.className = 'flex flex-col gap-2';
+    
+    Object.entries(motorGrubuOptions).forEach(([key, opt]) => {
+      const btn = document.createElement('button');
+      btn.className = `flex items-center gap-3 p-3 rounded-lg text-sm font-semibold transition ${
+        currentValue === key 
+          ? 'bg-cyan-500/20 border border-cyan-500 text-cyan-300' 
+          : 'border border-slate-700 hover:border-cyan-500 bg-slate-800/40 text-slate-300'
+      }`;
+      
+      const icon = document.createElement('i');
+      icon.setAttribute('data-lucide', opt.icon);
+      icon.className = 'w-5 h-5';
+      icon.style.color = opt.color;
+      
+      const label = document.createElement('span');
+      label.className = 'font-semibold';
+      label.textContent = opt.label;
+      
+      btn.appendChild(icon);
+      btn.appendChild(label);
+      
+      btn.addEventListener('click', () => {
+        const row = document.getElementById(`motor-row-${motorId}`);
+        row.querySelector('.motor-grubu-cell').textContent = key;
+        row.dataset.grubu = key;
+        
+        // Motor Adı dropdown'ı güncelle
+        const adiSelect = row.querySelector('.motor-adi-select');
+        adiSelect.innerHTML = '<option value="">Seç...</option>';
+        if (motorAdiOptions[key]) {
+          motorAdiOptions[key].forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.adi;
+            option.dataset.kod = item.kod;
+            option.textContent = item.adi;
+            adiSelect.appendChild(option);
+          });
+        }
+        adiSelect.value = '';
+        row.querySelector('.motor-kod-input').value = '';
+        
+        modal.remove();
+        lucide.createIcons();
+      });
+      
+      grid.appendChild(btn);
+    });
+    
+    content.appendChild(grid);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+    
+    lucide.createIcons();
+  }
+
+  // Motor satırı oluştur
+  function createMotorRow(motorId) {
+    const row = document.createElement('tr');
+    row.id = `motor-row-${motorId}`;
+    row.className = 'border-t border-slate-700/50 hover:bg-slate-800/30 transition';
+    row.style.height = '50px';
+    row.dataset.motorId = motorId;
+    row.dataset.grubu = '';
+    
+    // Motor Grubu (tıklanabilir küçük buton)
+    const grubuCell = document.createElement('td');
+    grubuCell.className = 'px-2 py-3 text-sm';
+    const grubuBtn = document.createElement('button');
+    grubuBtn.className = 'motor-grubu-cell px-3 py-2 rounded-lg bg-slate-800/40 border border-slate-700 hover:border-cyan-500 hover:bg-slate-800 transition text-slate-300 text-sm font-semibold cursor-pointer';
+    grubuBtn.textContent = 'Seç';
+    grubuBtn.style.minWidth = '90px';
+    grubuBtn.addEventListener('click', () => {
+      createMotorGrubuDropdown(motorId, row.dataset.grubu, grubuBtn);
+    });
+    grubuCell.appendChild(grubuBtn);
+    row.appendChild(grubuCell);
+    
+    // Grup Kodu (otomatik doldurulacak)
+    const kodCell = document.createElement('td');
+    kodCell.className = 'px-2 py-3 text-sm';
+    const kodInput = document.createElement('input');
+    kodInput.type = 'text';
+    kodInput.className = 'motor-kod-input w-full px-2 py-1 bg-slate-800/30 border border-slate-700 rounded text-slate-300 text-sm focus:outline-none';
+    kodInput.placeholder = '-';
+    kodInput.readOnly = true;
+    kodCell.appendChild(kodInput);
+    row.appendChild(kodCell);
+    
+    // Motor Adı (dropdown)
+    const adiCell = document.createElement('td');
+    adiCell.className = 'px-2 py-3 text-sm';
+    const adiSelect = document.createElement('select');
+    adiSelect.className = 'motor-adi-select w-full px-2 py-1 bg-slate-800/40 border border-slate-700 rounded text-slate-300 text-sm focus:border-cyan-500 focus:outline-none cursor-pointer';
+    adiSelect.style.appearance = 'auto';
+    
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Seç...';
+    adiSelect.appendChild(defaultOption);
+    
+    // Motor Adı seçim yapılırsa Grup Kodu otomatik doldur
+    adiSelect.addEventListener('change', () => {
+      const selectedOption = adiSelect.options[adiSelect.selectedIndex];
+      if (selectedOption.dataset.kod) {
+        kodInput.value = selectedOption.dataset.kod;
+      } else {
+        kodInput.value = '';
+      }
+    });
+    
+    adiCell.appendChild(adiSelect);
+    row.appendChild(adiCell);
+    
+    // Güç (Dropdown)
+    const gucCell = document.createElement('td');
+    gucCell.className = 'px-2 py-3 text-sm';
+    const gucSelect = document.createElement('select');
+    gucSelect.className = 'w-full px-2 py-1 bg-slate-800/40 border border-slate-700 rounded text-slate-300 text-sm focus:border-cyan-500 focus:outline-none cursor-pointer';
+    gucSelect.style.appearance = 'auto';
+    
+    const gucOptions = [0.09, 0.18, 0.25, 0.37, 0.55, 0.75, 1.10, 1.50, 2.20, 3.00, 3.70, 4.00, 5.50, 7.50, 11.00, 15.00, 18.50, 22.00];
+    const gucDefaultOption = document.createElement('option');
+    gucDefaultOption.value = '';
+    gucDefaultOption.textContent = 'Seç...';
+    gucSelect.appendChild(gucDefaultOption);
+    
+    gucOptions.forEach(guc => {
+      const option = document.createElement('option');
+      option.value = guc;
+      option.textContent = guc.toFixed(2);
+      gucSelect.appendChild(option);
+    });
+    
+    gucCell.appendChild(gucSelect);
+    row.appendChild(gucCell);
+    
+    // Akım (Otomatik hesaplan)
+    const akimCell = document.createElement('td');
+    akimCell.className = 'px-2 py-3 text-sm';
+    const akimInput = document.createElement('input');
+    akimInput.type = 'text';
+    akimInput.className = 'w-full px-2 py-1 bg-slate-800/30 border border-slate-700 rounded text-slate-300 text-sm focus:outline-none';
+    akimInput.placeholder = '0.00';
+    akimInput.readOnly = true;
+    akimCell.appendChild(akimInput);
+    row.appendChild(akimCell);
+    
+    // Koruma Tipi (Toggle Button)
+    const korumaCell = document.createElement('td');
+    korumaCell.className = 'px-2 py-3 text-center';
+    const korumaBtn = document.createElement('button');
+    korumaBtn.className = 'px-3 py-1 rounded-lg bg-slate-800/40 border border-slate-700 hover:border-cyan-500 hover:bg-slate-800 transition text-slate-300 text-sm font-semibold cursor-pointer h-8 flex items-center justify-center';
+    korumaBtn.textContent = 'MKŞ/Kontaktör';
+    korumaBtn.dataset.korumaType = 'kontaktor';
+    korumaBtn.style.minWidth = '130px';
+    korumaBtn.addEventListener('click', () => {
+      if (korumaBtn.dataset.korumaType === 'kontaktor') {
+        korumaBtn.textContent = 'Invertör/Sigorta';
+        korumaBtn.dataset.korumaType = 'invertor';
+      } else {
+        korumaBtn.textContent = 'MKŞ/Kontaktör';
+        korumaBtn.dataset.korumaType = 'kontaktor';
+      }
+    });
+    korumaCell.appendChild(korumaBtn);
+    row.appendChild(korumaCell);
+    
+    // Güç değişince akımı hesapla
+    gucSelect.addEventListener('change', () => {
+      if (gucSelect.value) {
+        const gucValue = parseFloat(gucSelect.value);
+        const akimValue = (gucValue * 2).toFixed(2);
+        akimInput.value = akimValue;
+      } else {
+        akimInput.value = '';
+      }
+    });
+    
+    // Sürücü 1-3 (text input)
+    for (let i = 1; i <= 3; i++) {
+      const sürücüCell = document.createElement('td');
+      sürücüCell.className = 'px-2 py-3 text-center';
+      const sürücüInput = document.createElement('input');
+      sürücüInput.type = 'text';
+      sürücüInput.className = 'w-full px-2 py-1 bg-slate-800/40 border border-slate-700 rounded text-slate-300 text-sm focus:border-cyan-500 focus:outline-none text-center';
+      sürücüInput.placeholder = '-';
+      sürücüCell.appendChild(sürücüInput);
+      row.appendChild(sürücüCell);
+    }
+    
+    // İşlem (Sil)
+    const islemCell = document.createElement('td');
+    islemCell.className = 'px-2 py-3 text-center';
+    const silBtn = document.createElement('button');
+    silBtn.className = 'p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition';
+    const silIcon = document.createElement('i');
+    silIcon.setAttribute('data-lucide', 'trash-2');
+    silIcon.className = 'w-4 h-4';
+    silBtn.appendChild(silIcon);
+    silBtn.addEventListener('click', () => {
+      row.remove();
+      state.motors = state.motors.filter(m => m.id !== motorId);
+    });
+    islemCell.appendChild(silBtn);
+    row.appendChild(islemCell);
+    
+    return row;
+  }
+
+  // Navigation
+  const navButtons = document.querySelectorAll('.nav-btn');
+  const pages = document.querySelectorAll('.page');
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.page;
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      pages.forEach(p => p.classList.remove('active'));
+      document.getElementById(`page-${target}`).classList.add('active');
+      document.getElementById('kasa-header-actions').style.display = target === 'kasa' ? 'flex' : 'none';
+    });
+  });
+
+
+
+  // ── KASA Spreadsheet ───────────────────────────────────────────
+  const KASA_COLS = 5;
+  let kasaRowCount = 0;
+  let kSel = null;      // { r, c } anchor
+  let kSelEnd = null;   // { r, c } range end
+  let kEditCell = null; // currently editing td
+  let kClip = null;     // { data:[], cut:bool }
+  let kCutCells = [];
+  let kRowSelMode = false;
+  let kCtxTargetRow = null;
+
+  function kasaCell(r, c) {
+    return document.querySelector(`#kasa-tbody td[data-row="${r}"][data-col="${c}"]`);
+  }
+
+  function kasaCreateRow() {
+    const r = kasaRowCount++;
+    const row = document.createElement('tr');
+    row.className = 'kasa-row';
+    const numTd = document.createElement('td');
+    numTd.className = 'kasa-row-num';
+    numTd.textContent = '–';
+    row.appendChild(numTd);
+    for (let c = 0; c < KASA_COLS; c++) {
+      const td = document.createElement('td');
+      td.dataset.row = r;
+      td.dataset.col = c;
+      td.className = 'kasa-td px-3 py-2 text-sm text-slate-300 mono text-center';
+      td.style.height = '36px';
+      td.style.overflow = 'hidden';
+      row.appendChild(td);
+    }
+    return row;
+  }
+
+  function kasaAddRow() {
+    const tbody = document.getElementById('kasa-tbody');
+    tbody.appendChild(kasaCreateRow());
+    kasaRenumberRows();
+  }
+  for (let i = 0; i < 15; i++) kasaAddRow();
+
+  function kasaAddRows() {
+    const input = document.getElementById('kasa-row-count');
+    const n = Math.max(1, parseInt(input.value) || 1);
+    const tbody = document.getElementById('kasa-tbody');
+    for (let i = 0; i < n; i++) tbody.appendChild(kasaCreateRow());
+    kasaRenumberRows();
+    lucide.createIcons();
+  }
+
+  function kasaRenumberRows() {
+    document.querySelectorAll('#kasa-tbody .kasa-row').forEach((row, i) => {
+      const numTd = row.querySelector('.kasa-row-num');
+      if (numTd) numTd.textContent = i + 1;
+    });
+  }
+
+  function kasaHighlight() {
+    document.querySelectorAll('#kasa-tbody .kasa-td').forEach(td =>
+      td.classList.remove('kasa-anchor', 'kasa-range'));
+    document.querySelectorAll('#kasa-tbody .kasa-row-num').forEach(td =>
+      td.classList.remove('kasa-row-selected'));
+    if (!kSel) { kasaUpdateOverlay(); return; }
+    const r1 = Math.min(kSel.r, (kSelEnd || kSel).r);
+    const r2 = Math.max(kSel.r, (kSelEnd || kSel).r);
+    const c1 = Math.min(kSel.c, (kSelEnd || kSel).c);
+    const c2 = Math.max(kSel.c, (kSelEnd || kSel).c);
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
+        const td = kasaCell(r, c);
+        if (!td) continue;
+        td.classList.add(r === kSel.r && c === kSel.c ? 'kasa-anchor' : 'kasa-range');
+      }
+      if (kRowSelMode) {
+        const firstData = kasaCell(r, 0);
+        if (firstData) {
+          const numTd = firstData.closest('tr').querySelector('.kasa-row-num');
+          if (numTd) numTd.classList.add('kasa-row-selected');
+        }
+      }
+    }
+    kasaUpdateOverlay();
+  }
+
+  function kasaUpdateOverlay() {
+    const overlay = document.getElementById('kasa-sel-overlay');
+    if (!overlay || !kSel) { if (overlay) overlay.style.display = 'none'; return; }
+    const r1 = Math.min(kSel.r, (kSelEnd||kSel).r);
+    const r2 = Math.max(kSel.r, (kSelEnd||kSel).r);
+    const c1 = Math.min(kSel.c, (kSelEnd||kSel).c);
+    const c2 = Math.max(kSel.c, (kSelEnd||kSel).c);
+    const topLeft = kasaCell(r1, c1);
+    const botRight = kasaCell(r2, c2);
+    if (!topLeft || !botRight) { overlay.style.display = 'none'; return; }
+    const container = overlay.parentElement;
+    const cRect = container.getBoundingClientRect();
+    const tlRect = topLeft.getBoundingClientRect();
+    const brRect = botRight.getBoundingClientRect();
+    overlay.style.display = 'block';
+    overlay.style.left   = (tlRect.left - cRect.left + container.scrollLeft) + 'px';
+    overlay.style.top    = (tlRect.top  - cRect.top  + container.scrollTop)  + 'px';
+    overlay.style.width  = (brRect.right  - tlRect.left) + 'px';
+    overlay.style.height = (brRect.bottom - tlRect.top)  + 'px';
+  }
+
+  function kasaEnterEdit(td, clear) {
+    if (!td) return;
+    if (kEditCell === td) return;
+    kasaExitEdit();
+    kEditCell = td;
+    td.contentEditable = 'true';
+    td.classList.add('kasa-editing');
+    if (clear) td.textContent = '';
+    td.focus();
+    if (!clear) {
+      const rng = document.createRange();
+      rng.selectNodeContents(td);
+      rng.collapse(false);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(rng);
+    }
+  }
+
+  function kasaExitEdit() {
+    if (!kEditCell) return;
+    kEditCell.contentEditable = 'false';
+    kEditCell.classList.remove('kasa-editing');
+    kEditCell = null;
+  }
+
+  function kasaMoveSel(dr, dc, extend) {
+    if (!kSel) return;
+    const ref = extend ? (kSelEnd || kSel) : kSel;
+    let nr = Math.max(0, ref.r + dr);
+    let nc = Math.max(0, Math.min(KASA_COLS - 1, ref.c + dc));
+    while (nr >= kasaRowCount) kasaAddRow();
+    if (extend) {
+      kSelEnd = { r: nr, c: nc };
+    } else {
+      kSel = { r: nr, c: nc };
+      kSelEnd = null;
+    }
+    kasaHighlight();
+  }
+
+  function kasaClearSel() {
+    if (!kSel) return;
+    const r1 = Math.min(kSel.r, (kSelEnd||kSel).r), r2 = Math.max(kSel.r, (kSelEnd||kSel).r);
+    const c1 = Math.min(kSel.c, (kSelEnd||kSel).c), c2 = Math.max(kSel.c, (kSelEnd||kSel).c);
+    for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) { const t=kasaCell(r,c); if(t) t.textContent=''; }
+  }
+
+  function kasaCopy(cut) {
+    if (!kSel) return;
+    const r1=Math.min(kSel.r,(kSelEnd||kSel).r), r2=Math.max(kSel.r,(kSelEnd||kSel).r);
+    const c1=Math.min(kSel.c,(kSelEnd||kSel).c), c2=Math.max(kSel.c,(kSelEnd||kSel).c);
+    const data=[];
+    for (let r=r1;r<=r2;r++) {
+      const row=[];
+      for (let c=c1;c<=c2;c++) { const t=kasaCell(r,c); row.push(t?t.textContent:''); }
+      data.push(row);
+    }
+    kCutCells.forEach(t=>t.classList.remove('kasa-cut')); kCutCells=[];
+    kClip={data,cut};
+    if (cut) {
+      for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) {
+        const t=kasaCell(r,c); if(t){t.classList.add('kasa-cut');kCutCells.push(t);}
+      }
+    }
+  }
+
+  function kasaPaste() {
+    if (!kClip||!kSel) return;
+    const {data,cut}=kClip; const sr=kSel.r, sc=kSel.c;
+    while (kasaRowCount<sr+data.length) kasaAddRow();
+    for (let dr=0;dr<data.length;dr++)
+      for (let dc=0;dc<data[dr].length;dc++) {
+        const t=kasaCell(sr+dr,sc+dc); if(t) t.textContent=data[dr][dc];
+      }
+    if (cut) { kCutCells.forEach(t=>{t.textContent='';t.classList.remove('kasa-cut');}); kCutCells=[]; kClip=null; }
+  }
+
+  const kasaGrid = document.getElementById('kasa-grid');
+  let kDragging = false;
+
+  kasaGrid.addEventListener('mousedown', e => {
+    const numTd = e.target.closest('#kasa-tbody .kasa-row-num');
+    if (numTd) {
+      if (kEditCell) kasaExitEdit();
+      const tr = numTd.closest('tr');
+      const firstData = tr.querySelector('.kasa-td');
+      if (!firstData) return;
+      const r = +firstData.dataset.row;
+      if (e.shiftKey && kSel && kRowSelMode) {
+        kSelEnd = { r, c: KASA_COLS - 1 };
+        kSel = { r: kSel.r, c: 0 };
+      } else {
+        kSel = { r, c: 0 };
+        kSelEnd = { r, c: KASA_COLS - 1 };
+      }
+      kRowSelMode = true;
+      kasaHighlight();
+      kasaGrid.focus();
+      kDragging = true;
+      e.preventDefault();
+      return;
+    }
+    const td = e.target.closest('#kasa-tbody .kasa-td');
+    if (!td) {
+      if (kEditCell) { kasaExitEdit(); kasaHighlight(); }
+      return;
+    }
+    if (kEditCell && kEditCell !== td) kasaExitEdit();
+    kRowSelMode = false;
+    const r=+td.dataset.row, c=+td.dataset.col;
+    if (e.shiftKey && kSel) { kSelEnd={r,c}; }
+    else { kSel={r,c}; kSelEnd=null; }
+    kasaHighlight();
+    kasaGrid.focus();
+    kDragging = true;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mouseover', e => {
+    if (!kDragging || !kSel) return;
+    if (kRowSelMode) {
+      const el = e.target.closest('#kasa-tbody .kasa-row-num') || e.target.closest('#kasa-tbody .kasa-td');
+      if (!el) return;
+      const tr = el.closest('tr');
+      const firstData = tr.querySelector('.kasa-td');
+      if (!firstData) return;
+      kSelEnd = { r: +firstData.dataset.row, c: KASA_COLS - 1 };
+      kSel = { r: kSel.r, c: 0 };
+    } else {
+      const td = e.target.closest('#kasa-tbody .kasa-td');
+      if (!td) return;
+      kSelEnd = { r:+td.dataset.row, c:+td.dataset.col };
+    }
+    kasaHighlight();
+  });
+
+  document.addEventListener('mouseup', () => { kDragging = false; });
+
+  kasaGrid.addEventListener('dblclick', e => {
+    const td = e.target.closest('#kasa-tbody .kasa-td');
+    if (!td) return;
+    kSel={r:+td.dataset.row, c:+td.dataset.col}; kSelEnd=null;
+    kasaHighlight();
+    kasaEnterEdit(td, false);
+  });
+
+  kasaGrid.addEventListener('keydown', e => {
+    if (kEditCell) {
+      if (e.key==='Escape') { e.preventDefault(); kasaExitEdit(); kasaHighlight(); kasaGrid.focus(); }
+      else if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); kasaExitEdit(); kasaMoveSel(1,0,false); kasaGrid.focus(); }
+      else if (e.key==='Tab') { e.preventDefault(); kasaExitEdit(); kasaMoveSel(0,e.shiftKey?-1:1,false); kasaGrid.focus(); }
+      return;
+    }
+    if (!kSel) return;
+    if (e.ctrlKey||e.metaKey) {
+      if (e.key==='c') { e.preventDefault(); kasaCopy(false); }
+      else if (e.key==='x') { e.preventDefault(); kasaCopy(true); }
+      else if (e.key==='v') { e.preventDefault(); kasaPaste(); }
+      return;
+    }
+    const arrows={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
+    if (arrows[e.key]) { e.preventDefault(); kasaMoveSel(...arrows[e.key], e.shiftKey); return; }
+    if (e.key==='Delete'||e.key==='Backspace') { e.preventDefault(); if (kRowSelMode) kasaDeleteSelectedRows(); else kasaClearSel(); return; }
+    if (e.key==='F2') { e.preventDefault(); kasaEnterEdit(kasaCell(kSel.r,kSel.c),false); return; }
+    if (e.key==='Enter') { e.preventDefault(); kasaEnterEdit(kasaCell(kSel.r,kSel.c),false); return; }
+    if (e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey) {
+      kasaEnterEdit(kasaCell(kSel.r,kSel.c), true);
+    }
+  });
+
+  // ── KASA Row operations ────────────────────────────────────────
+  function kasaDeleteSelectedRows() {
+    if (!kSel) return;
+    const r1 = Math.min(kSel.r, (kSelEnd||kSel).r);
+    const r2 = Math.max(kSel.r, (kSelEnd||kSel).r);
+    for (let r = r1; r <= r2; r++) {
+      const td = kasaCell(r, 0);
+      if (td) td.closest('tr').remove();
+    }
+    kSel = null; kSelEnd = null; kRowSelMode = false;
+    kasaHighlight();
+    kasaRenumberRows();
+  }
+
+  function kasaCtxInsertAbove() {
+    document.getElementById('kasa-ctx-menu').style.display = 'none';
+    if (kCtxTargetRow === null) return;
+    const r1 = kSel ? Math.min(kSel.r, (kSelEnd||kSel).r) : kCtxTargetRow;
+    const refTd = kasaCell(r1, 0);
+    if (!refTd) return;
+    document.getElementById('kasa-tbody').insertBefore(kasaCreateRow(), refTd.closest('tr'));
+    kasaRenumberRows();
+    kSel = null; kSelEnd = null; kRowSelMode = false; kasaHighlight();
+  }
+
+  function kasaCtxInsertBelow() {
+    document.getElementById('kasa-ctx-menu').style.display = 'none';
+    if (kCtxTargetRow === null) return;
+    const r2 = kSel ? Math.max(kSel.r, (kSelEnd||kSel).r) : kCtxTargetRow;
+    const refTd = kasaCell(r2, 0);
+    if (!refTd) return;
+    document.getElementById('kasa-tbody').insertBefore(kasaCreateRow(), refTd.closest('tr').nextSibling);
+    kasaRenumberRows();
+    kSel = null; kSelEnd = null; kRowSelMode = false; kasaHighlight();
+  }
+
+  function kasaCtxDeleteRows() {
+    document.getElementById('kasa-ctx-menu').style.display = 'none';
+    kasaDeleteSelectedRows();
+  }
+
+  kasaGrid.addEventListener('contextmenu', e => {
+    const numTd = e.target.closest('#kasa-tbody .kasa-row-num');
+    if (!numTd) return;
+    e.preventDefault();
+    const firstData = numTd.closest('tr').querySelector('.kasa-td');
+    if (!firstData) return;
+    const r = +firstData.dataset.row;
+    const r1 = kSel && kRowSelMode ? Math.min(kSel.r, (kSelEnd||kSel).r) : r + 1;
+    const r2 = kSel && kRowSelMode ? Math.max(kSel.r, (kSelEnd||kSel).r) : r - 1;
+    if (!kRowSelMode || r < r1 || r > r2) {
+      kSel = { r, c: 0 }; kSelEnd = { r, c: KASA_COLS - 1 };
+      kRowSelMode = true; kasaHighlight();
+    }
+    kCtxTargetRow = r;
+    const menu = document.getElementById('kasa-ctx-menu');
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    setTimeout(() => {
+      const rect = menu.getBoundingClientRect();
+      if (rect.right > window.innerWidth) menu.style.left = (e.clientX - rect.width) + 'px';
+      if (rect.bottom > window.innerHeight) menu.style.top = (e.clientY - rect.height) + 'px';
+    }, 0);
+  });
+
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('kasa-ctx-menu');
+    if (menu && !menu.contains(e.target)) menu.style.display = 'none';
+  });
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="kasa-ctx-menu">
+      <div class="kasa-ctx-item" onclick="kasaCtxInsertAbove()">&uarr; &Uuml;stüne Sat&#x131;r Ekle</div>
+      <div class="kasa-ctx-item" onclick="kasaCtxInsertBelow()">&darr; Alt&#x131;na Sat&#x131;r Ekle</div>
+      <div class="kasa-ctx-separator"></div>
+      <div class="kasa-ctx-item" style="color:#f87171;" onclick="kasaCtxDeleteRows()">&#x2715; Sat&#x131;r&#x131; Sil</div>
+    </div>`);
+
+  // ── KASA Save / Export / Import ───────────────────────────────
+  function kasaGetData() {
+    const rows = [];
+    document.querySelectorAll('#kasa-tbody .kasa-row').forEach(row => {
+      const cells = row.querySelectorAll('.kasa-td');
+      rows.push([...cells].map(td => td.textContent));
+    });
+    return rows;
+  }
+
+  function kasaSave() {
+    localStorage.setItem('kasa-data', JSON.stringify(kasaGetData()));
+    const btn = document.querySelector('#kasa-header-actions button');
+    const orig = btn.style.boxShadow;
+    btn.style.boxShadow = '0 0 24px rgba(34,211,238,0.8)';
+    setTimeout(() => btn.style.boxShadow = orig, 800);
+  }
+
+  function kasaExport() {
+    const rows = kasaGetData();
+    const headers = ['TARİH','TUTAR','İŞLEM','KİŞİ','TUTAR'];
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(','))].join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8'}));
+    a.download = 'kasa-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function kasaImport(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const lines = e.target.result.replace(/^\uFEFF/,'').split('\n').filter(l => l.trim());
+      const dataLines = lines.slice(1); // skip header
+      const tbody = document.getElementById('kasa-tbody');
+      tbody.innerHTML = '';
+      kasaRowCount = 0;
+      dataLines.forEach(line => {
+        const cols = line.split(',').map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+        const row = kasaCreateRow();
+        row.querySelectorAll('.kasa-td').forEach((td, i) => { if (cols[i] !== undefined) td.textContent = cols[i]; });
+        tbody.appendChild(row);
+      });
+      kasaRenumberRows();
+      kSel = null; kSelEnd = null; kRowSelMode = false; kasaHighlight();
+    };
+    reader.readAsText(file, 'utf-8');
+    input.value = '';
+  }
+
+  // Load saved data on startup
+  (function() {
+    const saved = localStorage.getItem('kasa-data');
+    if (!saved) return;
+    try {
+      const rows = JSON.parse(saved);
+      const tbody = document.getElementById('kasa-tbody');
+      tbody.innerHTML = '';
+      kasaRowCount = 0;
+      rows.forEach(cols => {
+        const row = kasaCreateRow();
+        row.querySelectorAll('.kasa-td').forEach((td, i) => { if (cols[i] !== undefined) td.textContent = cols[i]; });
+        tbody.appendChild(row);
+      });
+      kasaRenumberRows();
+    } catch(e) {}
+  })();
+
+  // Sidebar toggle
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const isOpen = sidebar.classList.contains('sidebar-open');
+    if (isOpen) {
+      sidebar.classList.remove('sidebar-open');
+      overlay.classList.add('hidden');
+    } else {
+      sidebar.classList.add('sidebar-open');
+      overlay.classList.remove('hidden');
+    }
+    lucide.createIcons();
+  }
+
+  // Initialize icons
+  lucide.createIcons();
+
+  // Initialize Element SDK
+  if (window.elementSdk) {
+    window.elementSdk.init({
+      defaultConfig: {},
+      onConfigChange: async () => {},
+      mapToCapabilities: () => ({ recolorables: [], borderables: [], fontEditable: undefined, fontSizeable: undefined }),
+      mapToEditPanelValues: () => new Map()
+    });
+  }
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a00b52fe7ae8b621',t:'MTc3OTYxNTQ3Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
