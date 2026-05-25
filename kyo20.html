@@ -495,8 +495,34 @@
       </div>
       <div id="ort-chart-view" style="display:none" class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-5">
         <div id="ort-chart-legend" class="flex flex-wrap gap-2 mb-5"></div>
-        <div style="position:relative;height:420px">
-          <canvas id="ort-chart-canvas"></canvas>
+        <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:14px;align-items:start;">
+          <div style="position:relative;height:460px">
+            <canvas id="ort-chart-canvas"></canvas>
+          </div>
+          <div class="bg-slate-900/45 border border-slate-700/50 rounded-lg p-4" style="display:flex;flex-direction:column;gap:10px;min-height:460px;">
+            <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#34d399;text-transform:uppercase">Ortak Paylari</div>
+            <div style="position:relative;height:230px">
+              <canvas id="ort-pie-canvas"></canvas>
+            </div>
+            <div style="flex:1;border-top:1px solid rgba(71,85,105,0.35);padding-top:8px;">
+              <table class="w-full mono" style="font-size:11px;line-height:1.55;">
+                <thead>
+                  <tr style="color:#64748b;text-align:left;border-bottom:1px solid rgba(71,85,105,0.3)">
+                    <th style="padding:4px 0;">Ortak</th>
+                    <th style="padding:4px 0;text-align:right;">Pay</th>
+                    <th style="padding:4px 0;text-align:right;">Oran</th>
+                  </tr>
+                </thead>
+                <tbody id="ort-share-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 bg-slate-900/30 border border-slate-700/45 rounded-lg p-4">
+          <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#22d3ee;text-transform:uppercase;margin-bottom:10px">Tarihe Gore Ortaklik Pay Degisimi</div>
+          <div style="position:relative;height:260px">
+            <canvas id="ort-timeline-canvas"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -1324,6 +1350,8 @@
   ];
 
   const HISSE_BATCH = 20;
+  const HISSE_SYMBOLS_URL = 'bist606.json';
+  const HISSE_TARGET_COUNT = 606;
   let hisseData = {};
   let hisseFilter_q = '';
   let sortCol = 'sym', sortAsc = true;
@@ -1331,6 +1359,25 @@
   let hisseCountdownTimer = null;
   let hisseLoadedBatches = 0, hisseTotalBatches = 0;
   let hisseInited = false;
+  let hisseUniverse = null;
+
+  async function hisseGetUniverse() {
+    if (Array.isArray(hisseUniverse) && hisseUniverse.length) return hisseUniverse;
+    try {
+      const r = await fetch(HISSE_SYMBOLS_URL + '?v=20260525');
+      if (r.ok) {
+        const json = await r.json();
+        const arr = Array.isArray(json?.symbols) ? json.symbols : [];
+        const clean = [...new Set(arr.map(s => String(s || '').trim().toUpperCase()).filter(Boolean))];
+        if (clean.length >= HISSE_TARGET_COUNT) {
+          hisseUniverse = clean.slice(0, HISSE_TARGET_COUNT);
+          return hisseUniverse;
+        }
+      }
+    } catch (e) {}
+    hisseUniverse = BIST_ALL.slice();
+    return hisseUniverse;
+  }
 
   function fmt(n, d) {
     if (n == null || isNaN(n)) return '\u2013';
@@ -1346,6 +1393,111 @@
   function fmtTime(ts) {
     if (!ts) return '\u2013';
     return new Date(ts * 1000).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function taSma(values, period) {
+    if (!values || values.length < period) return null;
+    let sum = 0;
+    for (let i = values.length - period; i < values.length; i++) sum += values[i];
+    return sum / period;
+  }
+
+  function taSmaSeries(values, period) {
+    if (!values || values.length < period) return [];
+    const out = new Array(values.length).fill(null);
+    let sum = 0;
+    for (let i = 0; i < values.length; i++) {
+      sum += values[i];
+      if (i >= period) sum -= values[i - period];
+      if (i >= period - 1) out[i] = sum / period;
+    }
+    return out;
+  }
+
+  function taEmaSeries(values, period) {
+    if (!values || values.length < period) return [];
+    const out = new Array(values.length).fill(null);
+    const k = 2 / (period + 1);
+    let seed = 0;
+    for (let i = 0; i < period; i++) seed += values[i];
+    let ema = seed / period;
+    out[period - 1] = ema;
+    for (let i = period; i < values.length; i++) {
+      ema = values[i] * k + ema * (1 - k);
+      out[i] = ema;
+    }
+    return out;
+  }
+
+  function taMacd(values) {
+    const ema12 = taEmaSeries(values, 12);
+    const ema26 = taEmaSeries(values, 26);
+    if (!ema12.length || !ema26.length) return null;
+    const macdLine = values.map((_, i) => {
+      if (ema12[i] == null || ema26[i] == null) return null;
+      return ema12[i] - ema26[i];
+    });
+    const validMacd = macdLine.filter(v => v != null);
+    const signalValid = taEmaSeries(validMacd, 9);
+    if (!signalValid.length) return null;
+    const signalLine = new Array(values.length).fill(null);
+    let k = 0;
+    for (let i = 0; i < macdLine.length; i++) {
+      if (macdLine[i] == null) continue;
+      signalLine[i] = signalValid[k++];
+    }
+    const histogram = macdLine.map((v, i) => (v == null || signalLine[i] == null) ? null : v - signalLine[i]);
+    return { macdLine, signalLine, histogram };
+  }
+
+  function taRsiSeries(values, period = 14) {
+    if (!values || values.length <= period) return [];
+    const rsi = new Array(values.length).fill(null);
+    let gain = 0;
+    let loss = 0;
+    for (let i = 1; i <= period; i++) {
+      const d = values[i] - values[i - 1];
+      if (d >= 0) gain += d;
+      else loss -= d;
+    }
+    let avgGain = gain / period;
+    let avgLoss = loss / period;
+    rsi[period] = avgLoss === 0 ? 100 : 100 - (100 / (1 + (avgGain / avgLoss)));
+    for (let i = period + 1; i < values.length; i++) {
+      const d = values[i] - values[i - 1];
+      const up = d > 0 ? d : 0;
+      const down = d < 0 ? -d : 0;
+      avgGain = ((avgGain * (period - 1)) + up) / period;
+      avgLoss = ((avgLoss * (period - 1)) + down) / period;
+      rsi[i] = avgLoss === 0 ? 100 : 100 - (100 / (1 + (avgGain / avgLoss)));
+    }
+    return rsi;
+  }
+
+  function taBollinger(values, period = 20, mult = 2) {
+    if (!values || values.length < period) return null;
+    const mid = taSmaSeries(values, period);
+    const upper = new Array(values.length).fill(null);
+    const lower = new Array(values.length).fill(null);
+    for (let i = period - 1; i < values.length; i++) {
+      const m = mid[i];
+      let varSum = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        const diff = values[j] - m;
+        varSum += diff * diff;
+      }
+      const sd = Math.sqrt(varSum / period);
+      upper[i] = m + (mult * sd);
+      lower[i] = m - (mult * sd);
+    }
+    return { mid, upper, lower };
+  }
+
+  function taLast(arr, offset = 0) {
+    if (!arr || !arr.length) return null;
+    const i = arr.length - 1 - offset;
+    if (i < 0) return null;
+    return arr[i];
   }
 
   function toggleSort(col) {
@@ -1487,12 +1639,13 @@
     if (icon) icon.classList.add('spinning');
     if (pw) pw.style.display = 'block';
     if (pb) pb.style.width = '0%';
+    const symbols = await hisseGetUniverse();
     hisseData = {};
     hisseLoadedBatches = 0;
     const batches = [];
-    for (let i = 0; i < BIST_ALL.length; i += HISSE_BATCH) batches.push(BIST_ALL.slice(i, i + HISSE_BATCH));
+    for (let i = 0; i < symbols.length; i += HISSE_BATCH) batches.push(symbols.slice(i, i + HISSE_BATCH));
     hisseTotalBatches = batches.length;
-    if (status) status.textContent = '0 / ' + BIST_ALL.length + ' arand\u0131...';
+    if (status) status.textContent = '0 / ' + symbols.length + ' arand\u0131...';
     await Promise.all(batches.map(async (batch) => {
       const quotes = await hisseFetchBatch(batch);
       quotes.forEach(q => {
@@ -1502,8 +1655,8 @@
         }
       });
       hisseLoadedBatches++;
-      const done = Math.min(hisseLoadedBatches * HISSE_BATCH, BIST_ALL.length);
-      if (status) status.textContent = done + ' / ' + BIST_ALL.length + ' arand\u0131...';
+      const done = Math.min(hisseLoadedBatches * HISSE_BATCH, symbols.length);
+      if (status) status.textContent = done + ' / ' + symbols.length + ' arand\u0131...';
       if (pb) pb.style.width = Math.round((hisseLoadedBatches / hisseTotalBatches) * 100) + '%';
       hisseRenderTable();
     }));
@@ -1536,6 +1689,240 @@
     if (!hisseInited) { hisseInited = true; hisseFetchAll(); }
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  UYARI — Indikator Taramasi
+  // ══════════════════════════════════════════════════════════════
+  const UYARI_SCAN_LIMIT = 120;
+  const UYARI_CONCURRENCY = 6;
+  const uyariHistoryCache = {};
+  let uyariInited = false;
+  let uyariScanRunning = false;
+  let uyariLastFilter = 'all';
+  let uyariSignals = null;
+
+  function uyariSetStatus(msg) {
+    const el = document.getElementById('uyari-status');
+    if (el) el.textContent = msg;
+  }
+
+  function uyariSetActiveBtn(filter) {
+    document.querySelectorAll('.uyari-filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.uyariFilter === filter);
+    });
+  }
+
+  async function uyariFetchHistory(sym) {
+    if (uyariHistoryCache[sym]) return uyariHistoryCache[sym];
+    const fullSym = sym + '.IS';
+    const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + fullSym + '?range=1y&interval=1d';
+    const attempts = [
+      'http://127.0.0.1:8765/' + yahooUrl,
+      'https://thingproxy.freeboard.io/fetch/' + yahooUrl,
+      'https://corsproxy.io/?' + encodeURIComponent(yahooUrl),
+    ];
+    for (const url of attempts) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 10000);
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (!r.ok) continue;
+        const json = await r.json();
+        const result = json?.chart?.result?.[0];
+        if (!result) continue;
+        const quote = result.indicators?.quote?.[0] || {};
+        const closes = (quote.close || []).filter(v => v != null && !isNaN(v));
+        const volumes = (quote.volume || []).filter(v => v != null && !isNaN(v));
+        if (closes.length < 60) continue;
+        const payload = { closes, volumes };
+        uyariHistoryCache[sym] = payload;
+        return payload;
+      } catch (e) {}
+    }
+    uyariHistoryCache[sym] = null;
+    return null;
+  }
+
+  function uyariEvaluateSymbol(sym, history) {
+    if (!history || !history.closes || history.closes.length < 60) return null;
+    const closes = history.closes;
+    const volumes = history.volumes || [];
+    const close = taLast(closes);
+    const prevClose = taLast(closes, 1);
+    const sma20Series = taSmaSeries(closes, 20);
+    const sma200Series = taSmaSeries(closes, 200);
+    const sma20 = taLast(sma20Series);
+    const sma200 = taLast(sma200Series);
+    const prevSma20 = taLast(sma20Series, 1);
+    const prevSma200 = taLast(sma200Series, 1);
+    const macd = taMacd(closes);
+    const rsiSeries = taRsiSeries(closes, 14);
+    const rsi = taLast(rsiSeries);
+    const prevRsi = taLast(rsiSeries, 1);
+    const bb = taBollinger(closes, 20, 2);
+    const bbMid = bb ? taLast(bb.mid) : null;
+    const prevBbMid = bb ? taLast(bb.mid, 1) : null;
+    const bbUpper = bb ? taLast(bb.upper) : null;
+    const bbLower = bb ? taLast(bb.lower) : null;
+    const vol = taLast(volumes);
+    const volSma20 = taSma(volumes, 20);
+    const lastMacd = macd ? taLast(macd.macdLine) : null;
+    const prevMacd = macd ? taLast(macd.macdLine, 1) : null;
+    const lastSignal = macd ? taLast(macd.signalLine) : null;
+    const prevSignal = macd ? taLast(macd.signalLine, 1) : null;
+    const lastHist = macd ? taLast(macd.histogram) : null;
+    const prevHist = macd ? taLast(macd.histogram, 1) : null;
+
+    const maBull = sma20 != null && sma200 != null && prevSma20 != null && prevSma200 != null &&
+      sma20 > sma200 && (prevSma20 <= prevSma200 || close > sma20);
+    const macdBull = lastMacd != null && lastSignal != null && prevMacd != null && prevSignal != null &&
+      lastMacd > lastSignal && (prevMacd <= prevSignal || (lastHist != null && prevHist != null && lastHist > prevHist));
+    const rsiBull = rsi != null && prevRsi != null && rsi >= 50 && rsi <= 70 && rsi > prevRsi;
+    const bbBull = bbMid != null && prevBbMid != null && bbUpper != null && bbLower != null &&
+      close > bbMid && prevClose <= prevBbMid && close < bbUpper;
+    const volBull = vol != null && volSma20 != null && close > prevClose && vol > (volSma20 * 1.35);
+
+    const signals = { ma: maBull, macd: macdBull, rsi: rsiBull, bb: bbBull, vol: volBull };
+    const count = Object.values(signals).filter(Boolean).length;
+
+    return {
+      symbol: sym,
+      signals,
+      score: count,
+      allBull: count === 5,
+      snapshot: {
+        close,
+        sma20,
+        sma200,
+        macd: lastMacd,
+        signal: lastSignal,
+        hist: lastHist,
+        rsi,
+        bbMid,
+        bbUpper,
+        bbLower,
+        vol,
+        volSma20,
+      }
+    };
+  }
+
+  function uyariBuildCard(item, filter) {
+    const q = hisseData[item.symbol] || {};
+    const pct = q.regularMarketChangePercent;
+    const isPos = pct > 0;
+    const cls = isPos ? 'pos' : (pct < 0 ? 'neg' : 'neu');
+    const pctStr = pct == null ? '\u2013' : (isPos ? '+' : '') + fmt(pct, 2) + '%';
+    const price = q.regularMarketPrice == null ? (item.snapshot.close || null) : q.regularMarketPrice;
+    const badges = [];
+    if (item.signals.ma) badges.push('MA');
+    if (item.signals.macd) badges.push('MACD');
+    if (item.signals.rsi) badges.push('RSI');
+    if (item.signals.bb) badges.push('BB');
+    if (item.signals.vol) badges.push('VOL');
+    if (item.allBull) badges.unshift('TUMU');
+    const scoreText = item.allBull ? 'Tum indikatorlerde yukselis' : (item.score + '/5 sinyal');
+    return `
+      <button class="uyari-card" style="cursor:pointer;text-align:left" onclick="uyariOpenDetail('${item.symbol}','${filter}')">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <span class="uyari-badge" style="font-weight:700">${item.symbol}</span>
+          <span class="mono ${cls}" style="font-size:12px;font-weight:700">${price != null ? fmt(price, 2) + ' \u20ba' : '\u2013'}</span>
+          <span class="mono ${cls}" style="font-size:11px">${pctStr}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+          <span class="mono" style="font-size:10px;color:#64748b">${scoreText}</span>
+          ${badges.map(b => `<span class="uyari-badge" style="font-size:10px">${b}</span>`).join('')}
+        </div>
+      </button>`;
+  }
+
+  function uyariRender(filter = uyariLastFilter) {
+    uyariLastFilter = filter;
+    uyariSetActiveBtn(filter);
+    const wrap = document.getElementById('uyari-results');
+    if (!wrap) return;
+    if (!uyariSignals) {
+      wrap.innerHTML = '<div class="mono" style="padding:44px 14px;text-align:center;color:#334155;font-size:13px;border:1px dashed rgba(71,85,105,0.4);border-radius:12px;background:rgba(10,14,26,0.4)">Analiz verisi hazir degil.</div>';
+      return;
+    }
+    const all = uyariSignals.all;
+    const list = filter === 'all' ? all : all.filter(x => x.signals[filter]);
+    if (!list.length) {
+      wrap.innerHTML = '<div class="mono" style="padding:44px 14px;text-align:center;color:#334155;font-size:13px;border:1px dashed rgba(71,85,105,0.4);border-radius:12px;background:rgba(10,14,26,0.4)">Bu filtrede yukselis adayi bulunamadi.</div>';
+      return;
+    }
+    wrap.innerHTML = list.map(item => uyariBuildCard(item, filter)).join('');
+  }
+
+  async function uyariScan(filter = 'all') {
+    if (uyariScanRunning) return;
+    uyariScanRunning = true;
+    uyariSetActiveBtn(filter);
+    uyariSetStatus('Tarama hazirlaniyor...');
+
+    if (!Object.keys(hisseData).length) await hisseFetchAll();
+
+    const candidates = Object.values(hisseData)
+      .sort((a, b) => (Math.abs(b.regularMarketChangePercent || 0) - Math.abs(a.regularMarketChangePercent || 0)))
+      .slice(0, UYARI_SCAN_LIMIT)
+      .map(q => (q.symbol || '').replace(/\.IS$/i, ''))
+      .filter(Boolean);
+
+    const results = [];
+    let done = 0;
+    let idx = 0;
+
+    const workers = Array.from({ length: Math.min(UYARI_CONCURRENCY, candidates.length) }, async () => {
+      while (idx < candidates.length) {
+        const my = candidates[idx++];
+        const history = await uyariFetchHistory(my);
+        const evald = uyariEvaluateSymbol(my, history);
+        if (evald && evald.score > 0) results.push(evald);
+        done++;
+        uyariSetStatus(done + ' / ' + candidates.length + ' analiz edildi...');
+      }
+    });
+    await Promise.all(workers);
+
+    results.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const ap = (hisseData[a.symbol]?.regularMarketChangePercent || 0);
+      const bp = (hisseData[b.symbol]?.regularMarketChangePercent || 0);
+      return bp - ap;
+    });
+
+    uyariSignals = {
+      all: results,
+      allBullCount: results.filter(x => x.allBull).length,
+      totalScanned: candidates.length,
+      readyAt: new Date(),
+    };
+
+    const now = uyariSignals.readyAt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    uyariSetStatus('son: ' + now + ' — ' + results.length + ' aday, ' + uyariSignals.allBullCount + ' tumu uyumlu');
+    uyariRender(filter);
+    uyariScanRunning = false;
+  }
+
+  function uyariOpenDetail(symbol, filter) {
+    const item = uyariSignals?.all?.find(x => x.symbol === symbol) || null;
+    hisseOpenDetail(symbol, item, filter || 'all');
+  }
+
+  async function uyariRun(filter = 'all') {
+    if (!uyariSignals) {
+      await uyariScan(filter);
+      return;
+    }
+    uyariRender(filter);
+  }
+
+  function uyariOnActivate() {
+    if (uyariInited) return;
+    uyariInited = true;
+    uyariRun('all');
+  }
+
   // ── HİSSE Detay Grafik ──────────────────────────────────────────
   const HISSE_PERIODS = [
     { label: '1G',  range: '1d',  interval: '5m'  },
@@ -1550,9 +1937,36 @@
   let hisseDetailSym = null;
   let hisseDetailChart = null;
   let hisseDetailPeriodIdx = 3; // 3A varsayılan
+  let hisseDetailAlertData = null;
+  let hisseDetailAlertFilter = 'all';
 
-  function hisseOpenDetail(symbol) {
+  function hisseRenderIndicatorPanel(calc) {
+    const panel = document.getElementById('hd-indicator-bar');
+    if (!panel) return;
+    const snap = (hisseDetailAlertData && hisseDetailAlertData.snapshot) ? hisseDetailAlertData.snapshot : calc;
+    if (!snap) { panel.innerHTML = ''; return; }
+    const cards = [
+      { label: 'MA 20', value: snap.sma20 != null ? fmt(snap.sma20, 2) : '\u2013', on: !!hisseDetailAlertData?.signals?.ma },
+      { label: 'MA 200', value: snap.sma200 != null ? fmt(snap.sma200, 2) : '\u2013', on: !!hisseDetailAlertData?.signals?.ma },
+      { label: 'MACD', value: snap.macd != null ? fmt(snap.macd, 3) : '\u2013', on: !!hisseDetailAlertData?.signals?.macd },
+      { label: 'Signal', value: snap.signal != null ? fmt(snap.signal, 3) : '\u2013', on: !!hisseDetailAlertData?.signals?.macd },
+      { label: 'RSI(14)', value: snap.rsi != null ? fmt(snap.rsi, 2) : '\u2013', on: !!hisseDetailAlertData?.signals?.rsi },
+      { label: 'BB Mid', value: snap.bbMid != null ? fmt(snap.bbMid, 2) : '\u2013', on: !!hisseDetailAlertData?.signals?.bb },
+      { label: 'Vol', value: snap.vol != null ? fmtVol(snap.vol) : '\u2013', on: !!hisseDetailAlertData?.signals?.vol },
+      { label: 'Vol SMA20', value: snap.volSma20 != null ? fmtVol(snap.volSma20) : '\u2013', on: !!hisseDetailAlertData?.signals?.vol },
+    ];
+    const head = hisseDetailAlertData
+      ? `<div class="mono" style="grid-column:1/-1;font-size:10px;letter-spacing:.05em;color:#64748b;text-transform:uppercase">Uyari odagi: ${hisseDetailAlertFilter.toUpperCase()}</div>`
+      : '';
+    panel.innerHTML = head + cards.map(c =>
+      `<div class="hd-stat" style="padding:7px 10px;border-color:${c.on ? 'rgba(52,211,153,0.45)' : 'rgba(71,85,105,0.3)'};background:${c.on ? 'rgba(16,185,129,0.08)' : 'rgba(15,23,42,0.55)'}"><div class="hd-stat-label">${c.label}</div><div class="hd-stat-value" style="color:${c.on ? '#6ee7b7' : '#cbd5e1'}">${c.value}</div></div>`
+    ).join('');
+  }
+
+  function hisseOpenDetail(symbol, alertData = null, focusFilter = 'all') {
     hisseDetailSym = symbol;
+    hisseDetailAlertData = alertData;
+    hisseDetailAlertFilter = focusFilter;
     const rawSym = symbol.replace(/\.IS$/i, '');
     const d = hisseData[rawSym] || {};
     const name = d.shortName || d.longName || rawSym;
@@ -1572,6 +1986,7 @@
     bar.innerHTML = HISSE_PERIODS.map((p, i) =>
       `<button class="hd-period-btn${i === hisseDetailPeriodIdx ? ' hd-active' : ''}" onclick="hisseDetailChangePeriod(${i})">${p.label}</button>`
     ).join('');
+    document.getElementById('hd-indicator-bar').innerHTML = '';
     document.getElementById('hd-stats-bar').innerHTML = '';
     document.getElementById('hd-loading').style.display = 'flex';
     document.getElementById('hisse-detail-modal').style.display = 'flex';
@@ -1632,6 +2047,12 @@
       return dt.toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' });
     });
     const values = points.map(p => p.v);
+    const volumes = points.map((_, i) => quotes.volume ? quotes.volume[i] : null).filter(v => v != null && !isNaN(v));
+    const sma20Series = taSmaSeries(values, 20);
+    const sma200Series = taSmaSeries(values, 200);
+    const bb = taBollinger(values, 20, 2);
+    const macd = taMacd(values);
+    const rsiSeries = taRsiSeries(values, 14);
     const firstVal = values[0] || 0;
     const lastVal = values[values.length - 1] || firstVal;
     const isUp = lastVal >= firstVal;
@@ -1649,30 +2070,87 @@
     const grad = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 300);
     grad.addColorStop(0, isUp ? 'rgba(52,211,153,0.28)' : 'rgba(248,113,113,0.28)');
     grad.addColorStop(1, isUp ? 'rgba(52,211,153,0.0)' : 'rgba(248,113,113,0.0)');
+    const datasets = [{
+      label: 'Fiyat',
+      data: values,
+      borderColor: lineColor,
+      borderWidth: 2,
+      backgroundColor: grad,
+      fill: true,
+      tension: 0.2,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: lineColor,
+      pointHoverBorderColor: '#0a0e1a',
+      pointHoverBorderWidth: 2,
+      order: 3,
+    }];
+    if (sma20Series.length) {
+      datasets.push({
+        label: 'MA20',
+        data: sma20Series,
+        borderColor: 'rgba(250,204,21,0.95)',
+        borderWidth: 1.4,
+        pointRadius: 0,
+        tension: 0.18,
+        fill: false,
+        order: 1,
+      });
+    }
+    if (sma200Series.length) {
+      datasets.push({
+        label: 'MA200',
+        data: sma200Series,
+        borderColor: 'rgba(96,165,250,0.95)',
+        borderWidth: 1.2,
+        pointRadius: 0,
+        tension: 0.18,
+        fill: false,
+        order: 1,
+      });
+    }
+    if (bb && bb.upper && bb.lower) {
+      datasets.push({
+        label: 'BB Ust',
+        data: bb.upper,
+        borderColor: 'rgba(203,213,225,0.45)',
+        borderWidth: 1,
+        pointRadius: 0,
+        tension: 0.15,
+        fill: false,
+        order: 2,
+      });
+      datasets.push({
+        label: 'BB Alt',
+        data: bb.lower,
+        borderColor: 'rgba(203,213,225,0.45)',
+        borderWidth: 1,
+        pointRadius: 0,
+        tension: 0.15,
+        fill: false,
+        order: 2,
+      });
+    }
     hisseDetailChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels,
-        datasets: [{
-          data: values,
-          borderColor: lineColor,
-          borderWidth: 2,
-          backgroundColor: grad,
-          fill: true,
-          tension: 0.2,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: lineColor,
-          pointHoverBorderColor: '#0a0e1a',
-          pointHoverBorderWidth: 2,
-        }]
+        datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: true,
+            labels: {
+              color: '#64748b',
+              boxWidth: 10,
+              boxHeight: 3,
+              font: { family: "'JetBrains Mono', monospace", size: 10 }
+            }
+          },
           tooltip: {
             backgroundColor: 'rgba(10,14,26,0.97)',
             borderColor: isUp ? 'rgba(52,211,153,0.45)' : 'rgba(248,113,113,0.45)',
@@ -1711,6 +2189,16 @@
       { label: 'Hacim',        value: meta.regularMarketVolume   ? fmtVol(meta.regularMarketVolume) : '\u2013' },
       { label: 'Borsa',        value: meta.exchangeName          || '\u2013' },
     ];
+    hisseRenderIndicatorPanel({
+      sma20: taLast(sma20Series),
+      sma200: taLast(sma200Series),
+      macd: macd ? taLast(macd.macdLine) : null,
+      signal: macd ? taLast(macd.signalLine) : null,
+      rsi: taLast(rsiSeries),
+      bbMid: bb ? taLast(bb.mid) : null,
+      vol: taLast(volumes),
+      volSma20: taSma(volumes, 20),
+    });
     document.getElementById('hd-stats-bar').innerHTML = stats.map(s =>
       `<div class="hd-stat"><div class="hd-stat-label">${s.label}</div><div class="hd-stat-value">${s.value}</div></div>`
     ).join('');
@@ -1744,6 +2232,7 @@
           <div id="hd-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#334155;font-family:'JetBrains Mono',monospace;font-size:13px">Y&#xfc;kleniyor&#8230;</div>
           <canvas id="hd-chart-canvas" style="width:100%;height:100%"></canvas>
         </div>
+        <div id="hd-indicator-bar" style="padding:6px 24px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;border-top:1px solid rgba(71,85,105,0.15)"></div>
         <div id="hd-stats-bar" style="padding:12px 24px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;border-top:1px solid rgba(71,85,105,0.15);flex-shrink:0"></div>
       </div>
     </div>`);
@@ -1756,6 +2245,76 @@
   let oSel = null, oSelEnd = null, oEditCell = null;
   let oClip = null, oCutCells = [];
   let oRowSelMode = false, oCtxTargetRow = null, ortDelColTarget = -1;
+
+  function ortNormColName(v) {
+    return (v || '')
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function ortParseInputNum(v) {
+    if (v == null) return 0;
+    const s = String(v).trim();
+    if (!s) return 0;
+    const clean = s.replace(/[^\d,.-]/g, '');
+    if (!clean) return 0;
+    const comma = clean.lastIndexOf(',');
+    const dot = clean.lastIndexOf('.');
+    const decPos = Math.max(comma, dot);
+    let normalized;
+    if (decPos >= 0) {
+      const intPart = clean.slice(0, decPos).replace(/[.,]/g, '');
+      const fracPart = clean.slice(decPos + 1).replace(/[.,]/g, '');
+      normalized = intPart + '.' + fracPart;
+    } else {
+      normalized = clean.replace(/[.,]/g, '');
+    }
+    const n = parseFloat(normalized);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function ortFmtMoney(v) {
+    if (v == null || isNaN(v)) return '';
+    return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function ortGetCalcIndexes() {
+    const sermayeIdx = ortColumns.length - 2;
+    const tutarIdx = ortColumns.length - 1;
+    const wanted = new Set(['MERIC', 'FATIH', 'MERTCAN', 'MERT CAN', 'ASIYE', 'ERKIN']);
+    const srcIdx = [];
+    for (let i = 1; i < sermayeIdx; i++) {
+      if (wanted.has(ortNormColName(ortColumns[i]))) srcIdx.push(i);
+    }
+    return { sermayeIdx, tutarIdx, srcIdx };
+  }
+
+  function ortRecalcFinancials() {
+    const rows = [...document.querySelectorAll('#ort-tbody .ort-row')];
+    if (!rows.length || ortColumns.length < 3) return;
+    const { sermayeIdx, tutarIdx, srcIdx } = ortGetCalcIndexes();
+    let cumulative = 0;
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('.ort-td');
+      let rowTotal = 0;
+      srcIdx.forEach(i => {
+        const td = cells[i];
+        if (!td) return;
+        rowTotal += ortParseInputNum(td.textContent);
+      });
+      cumulative += rowTotal;
+      if (cells[tutarIdx]) cells[tutarIdx].textContent = ortFmtMoney(rowTotal);
+      if (cells[sermayeIdx]) cells[sermayeIdx].textContent = ortFmtMoney(cumulative);
+    });
+    if (ortChartMode) ortRenderChart();
+  }
+
+  function ortIsComputedCol(c) {
+    return c === ortColumns.length - 2 || c === ortColumns.length - 1;
+  }
 
   function ortIsDeleteable(i) { return i >= 1 && i <= ortColumns.length - 3; }
 
@@ -1807,12 +2366,16 @@
     return row;
   }
 
-  function ortAddRow() { document.getElementById('ort-tbody').appendChild(ortCreateRow()); ortRenumberRows(); }
+  function ortAddRow() {
+    document.getElementById('ort-tbody').appendChild(ortCreateRow());
+    ortRenumberRows();
+    ortRecalcFinancials();
+  }
 
   function ortAddRows() {
     const n = Math.max(1, parseInt(document.getElementById('ort-row-count').value) || 1);
     for (let i = 0; i < n; i++) document.getElementById('ort-tbody').appendChild(ortCreateRow());
-    ortRenumberRows(); lucide.createIcons();
+    ortRenumberRows(); ortRecalcFinancials(); lucide.createIcons();
   }
 
   function ortRenumberRows() {
@@ -1854,12 +2417,20 @@
 
   function ortEnterEdit(td, clear) {
     if (!td||oEditCell===td) return;
+    const colIdx = +td.dataset.col;
+    if (ortIsComputedCol(colIdx)) return;
     ortExitEdit(); oEditCell=td; td.contentEditable='true'; td.classList.add('ort-editing');
     if (clear) td.textContent='';
     td.focus();
     if (!clear) { const rng=document.createRange(); rng.selectNodeContents(td); rng.collapse(false); window.getSelection().removeAllRanges(); window.getSelection().addRange(rng); }
   }
-  function ortExitEdit() { if(!oEditCell) return; oEditCell.contentEditable='false'; oEditCell.classList.remove('ort-editing'); oEditCell=null; }
+  function ortExitEdit() {
+    if(!oEditCell) return;
+    oEditCell.contentEditable='false';
+    oEditCell.classList.remove('ort-editing');
+    oEditCell=null;
+    ortRecalcFinancials();
+  }
 
   function ortMoveSel(dr, dc, extend) {
     if (!oSel) return;
@@ -1875,6 +2446,7 @@
     const r1=Math.min(oSel.r,(oSelEnd||oSel).r), r2=Math.max(oSel.r,(oSelEnd||oSel).r);
     const c1=Math.min(oSel.c,(oSelEnd||oSel).c), c2=Math.max(oSel.c,(oSelEnd||oSel).c);
     for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) { const t=ortCell(r,c); if(t) t.textContent=''; }
+    ortRecalcFinancials();
   }
 
   function ortCopy(cut) {
@@ -1892,8 +2464,13 @@
     if (!oClip||!oSel) return;
     const{data,cut}=oClip; const sr=oSel.r,sc=oSel.c;
     while (ortRowCount<sr+data.length) ortAddRow();
-    for (let dr=0;dr<data.length;dr++) for (let dc=0;dc<data[dr].length;dc++) { if(sc+dc>=ortColumns.length)continue; const t=ortCell(sr+dr,sc+dc); if(t) t.textContent=data[dr][dc]; }
+    for (let dr=0;dr<data.length;dr++) for (let dc=0;dc<data[dr].length;dc++) {
+      if(sc+dc>=ortColumns.length)continue;
+      if (ortIsComputedCol(sc+dc)) continue;
+      const t=ortCell(sr+dr,sc+dc); if(t) t.textContent=data[dr][dc];
+    }
     if (cut) { oCutCells.forEach(t=>{t.textContent='';t.classList.remove('ort-cut');}); oCutCells=[]; oClip=null; }
+    ortRecalcFinancials();
   }
 
   // ── Sütun yönetimi ────────────────────────────────────────────
@@ -1931,6 +2508,7 @@
       if (cells[colIdx]) row.insertBefore(td, cells[colIdx]); else row.appendChild(td);
     });
     ortRenumberCols(); ortRebuildHeader();
+    ortRecalcFinancials();
     oSel = null; oSelEnd = null; ortHighlight(); lucide.createIcons();
   }
 
@@ -1950,6 +2528,7 @@
       if (cells[insertAt]) row.insertBefore(td, cells[insertAt]); else row.appendChild(td);
     });
     ortRenumberCols(); ortRebuildHeader();
+    ortRecalcFinancials();
     oSel=null; oSelEnd=null; ortHighlight(); lucide.createIcons();
   }
 
@@ -1995,6 +2574,7 @@
       if (cells[colIdx]) cells[colIdx].remove();
     });
     ortRenumberCols(); ortRebuildHeader();
+    ortRecalcFinancials();
     document.getElementById('ort-del-col-modal').style.display = 'none';
     ortDelColTarget = -1; oSel=null; oSelEnd=null; ortHighlight();
   }
@@ -2069,7 +2649,7 @@
     if (!oSel) return;
     const r1=Math.min(oSel.r,(oSelEnd||oSel).r), r2=Math.max(oSel.r,(oSelEnd||oSel).r);
     for (let r=r1;r<=r2;r++) { const td=ortCell(r,0); if(td) td.closest('tr').remove(); }
-    oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight(); ortRenumberRows();
+    oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight(); ortRenumberRows(); ortRecalcFinancials();
   }
   function ortCtxInsertAbove() {
     document.getElementById('ort-ctx-menu').style.display='none';
@@ -2077,7 +2657,7 @@
     const r1=oSel?Math.min(oSel.r,(oSelEnd||oSel).r):oCtxTargetRow;
     const refTd=ortCell(r1,0); if(!refTd) return;
     document.getElementById('ort-tbody').insertBefore(ortCreateRow(),refTd.closest('tr'));
-    ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight();
+    ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight(); ortRecalcFinancials();
   }
   function ortCtxInsertBelow() {
     document.getElementById('ort-ctx-menu').style.display='none';
@@ -2085,7 +2665,7 @@
     const r2=oSel?Math.max(oSel.r,(oSelEnd||oSel).r):oCtxTargetRow;
     const refTd=ortCell(r2,0); if(!refTd) return;
     document.getElementById('ort-tbody').insertBefore(ortCreateRow(),refTd.closest('tr').nextSibling);
-    ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight();
+    ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight(); ortRecalcFinancials();
   }
   function ortCtxDeleteRows() { document.getElementById('ort-ctx-menu').style.display='none'; ortDeleteSelectedRows(); }
 
@@ -2141,7 +2721,7 @@
       const cols=parseCsv(lines[0]); if(cols.length>0){ortColumns=cols;ortRebuildHeader();}
       const tbody=document.getElementById('ort-tbody'); tbody.innerHTML=''; ortRowCount=0;
       lines.slice(1).forEach(line=>{ const cv=parseCsv(line); const row=ortCreateRow(); row.querySelectorAll('.ort-td').forEach((td,i)=>{if(cv[i]!==undefined)td.textContent=cv[i];}); tbody.appendChild(row); });
-      ortRenumberRows(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight();
+      ortRenumberRows(); ortRecalcFinancials(); oSel=null; oSelEnd=null; oRowSelMode=false; ortHighlight();
     };
     reader.readAsText(file,'utf-8'); input.value='';
   }
@@ -2149,6 +2729,7 @@
   // ── İlklendirme ───────────────────────────────────────────────
   ortRebuildHeader();
   for (let i=0; i<15; i++) ortAddRow();
+  ortRecalcFinancials();
 
   (function(){
     const saved=localStorage.getItem('ort-data'); if(!saved) return;
@@ -2158,6 +2739,7 @@
       const tbody=document.getElementById('ort-tbody'); tbody.innerHTML=''; ortRowCount=0;
       rows.forEach(cols=>{const row=ortCreateRow();row.querySelectorAll('.ort-td').forEach((td,i)=>{if(cols[i]!==undefined)td.textContent=cols[i];});tbody.appendChild(row);});
       ortRenumberRows();
+      ortRecalcFinancials();
     } catch(e){}
   })();
 
@@ -2191,8 +2773,10 @@
     </div>`);
 
   // ── ORTAKLIK Grafik / Veri toggle ──────────────────────────
-  let ortChartMode = false;
-  let ortChartInstance = null;
+  var ortChartMode = false;
+  var ortChartInstance = null;
+  var ortPieChartInstance = null;
+  var ortTimelineChartInstance = null;
 
   const ORT_CHART_COLORS = [
     {bg:'rgba(167,139,250,0.75)', border:'rgba(167,139,250,1)'},
@@ -2210,6 +2794,23 @@
     if (!str || !str.trim()) return null;
     const n = parseFloat(str.replace(/[^\d.,-]/g,'').replace(',','.'));
     return isNaN(n) ? null : n;
+  }
+
+  function ortColorAt(i, alpha = 1) {
+    const hue = Math.round((i * 137.508) % 360);
+    return `hsla(${hue}, 78%, 64%, ${alpha})`;
+  }
+
+  function ortParseDateKey(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    if (!s) return null;
+    let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+    m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1]).getTime();
+    const t = Date.parse(s);
+    return isNaN(t) ? null : t;
   }
 
   function ortToggleView() {
@@ -2240,32 +2841,39 @@
   function ortRenderChart() {
     const rows = [...document.querySelectorAll('#ort-tbody .ort-row')];
     const labels = rows.map(r => { const td = r.querySelector('.ort-td[data-col="0"]'); return td ? td.textContent.trim() : ''; });
-    // Collect datasets for columns 1..end, skip entirely-empty columns
     const numCols = ortColumns.length;
-    const datasets = [];
+    const partnerCols = [];
+    for (let c = 1; c < Math.max(1, numCols - 2); c++) {
+      partnerCols.push({ idx: c, name: ortColumns[c] });
+    }
+
+    // Collect bar datasets for columns 1..end, skip entirely-empty columns
+    const barDatasets = [];
     for (let c = 1; c < numCols; c++) {
       const vals = rows.map(r => { const td = r.querySelector(`.ort-td[data-col="${c}"]`); return td ? ortParseNum(td.textContent) : null; });
       if (vals.every(v => v === null)) continue;
-      const ci = (c - 1) % ORT_CHART_COLORS.length;
-      datasets.push({
+      const colorIdx = c - 1;
+      barDatasets.push({
         label: ortColumns[c],
         data: vals,
-        backgroundColor: ORT_CHART_COLORS[ci].bg,
-        borderColor: ORT_CHART_COLORS[ci].border,
+        backgroundColor: ortColorAt(colorIdx, 0.62),
+        borderColor: ortColorAt(colorIdx, 1),
         borderWidth: 1.5,
         borderRadius: 4,
         borderSkipped: false,
       });
     }
+
     // Legend
     const legend = document.getElementById('ort-chart-legend');
-    legend.innerHTML = datasets.map((ds, i) => `<button class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs mono font-semibold transition-all" data-ds="${i}" onclick="ortToggleDataset(this,${i})" style="color:#e2e8f0;background:${ds.backgroundColor};border:1px solid ${ds.borderColor};box-shadow:0 0 8px ${ds.borderColor.replace('1)','0.35)')}">${ds.label}</button>`).join('');
+    legend.innerHTML = barDatasets.map((ds, i) => `<button class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs mono font-semibold transition-all" data-ds="${i}" onclick="ortToggleDataset(this,${i})" style="color:#e2e8f0;background:${ds.backgroundColor};border:1px solid ${ds.borderColor};box-shadow:0 0 8px rgba(148,163,184,0.25)">${ds.label}</button>`).join('');
+
     // Chart
     if (ortChartInstance) { ortChartInstance.destroy(); ortChartInstance = null; }
     const ctx = document.getElementById('ort-chart-canvas').getContext('2d');
     ortChartInstance = new Chart(ctx, {
       type: 'bar',
-      data: { labels, datasets },
+      data: { labels, datasets: barDatasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -2298,6 +2906,162 @@
         }
       }
     });
+
+    const partnerShares = partnerCols.map((p, i) => {
+      let total = 0;
+      rows.forEach(r => {
+        const td = r.querySelector(`.ort-td[data-col="${p.idx}"]`);
+        total += td ? (ortParseNum(td.textContent) || 0) : 0;
+      });
+      return {
+        name: p.name,
+        value: total,
+        color: ortColorAt(i, 1),
+        bg: ortColorAt(i, 0.7),
+      };
+    }).filter(x => x.value > 0);
+
+    const shareSum = partnerShares.reduce((a, b) => a + b.value, 0);
+    const shareBody = document.getElementById('ort-share-tbody');
+    if (shareBody) {
+      if (!partnerShares.length || shareSum <= 0) {
+        shareBody.innerHTML = '<tr><td colspan="3" style="padding:10px 0;color:#475569;text-align:center">Pay verisi yok</td></tr>';
+      } else {
+        shareBody.innerHTML = partnerShares
+          .sort((a, b) => b.value - a.value)
+          .map(s => {
+            const pct = (s.value / shareSum) * 100;
+            return `<tr style="border-bottom:1px solid rgba(71,85,105,0.2)">
+              <td style="padding:6px 0;display:flex;align-items:center;gap:8px;color:#cbd5e1"><span style="width:8px;height:8px;border-radius:999px;background:${s.color};display:inline-block"></span>${s.name}</td>
+              <td style="padding:6px 0;text-align:right;color:#e2e8f0">${s.value.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td style="padding:6px 0;text-align:right;color:#6ee7b7">${pct.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</td>
+            </tr>`;
+          }).join('');
+      }
+    }
+
+    if (ortPieChartInstance) { ortPieChartInstance.destroy(); ortPieChartInstance = null; }
+    const pieCanvas = document.getElementById('ort-pie-canvas');
+    if (pieCanvas) {
+      const pieCtx = pieCanvas.getContext('2d');
+      ortPieChartInstance = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: partnerShares.map(p => p.name),
+          datasets: [{
+            data: partnerShares.map(p => p.value),
+            backgroundColor: partnerShares.map(p => p.color),
+            borderColor: 'rgba(15,23,42,0.95)',
+            borderWidth: 2,
+            hoverOffset: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15,23,42,0.95)',
+              borderColor: 'rgba(52,211,153,0.5)',
+              borderWidth: 1,
+              titleColor: '#cbd5e1',
+              bodyColor: '#e2e8f0',
+              titleFont: { family: '\'JetBrains Mono\', monospace', size: 11 },
+              bodyFont: { family: '\'JetBrains Mono\', monospace', size: 11 },
+              callbacks: {
+                label: ctx => {
+                  const v = ctx.parsed || 0;
+                  const pct = shareSum > 0 ? (v / shareSum * 100) : 0;
+                  return ' ' + v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' (' + pct.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%)';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Tarihe gore ortak pay degisimi (line chart)
+    if (ortTimelineChartInstance) { ortTimelineChartInstance.destroy(); ortTimelineChartInstance = null; }
+    const timelineCanvas = document.getElementById('ort-timeline-canvas');
+    if (timelineCanvas) {
+      const timelineRows = rows.map((r, rowIdx) => {
+        const tdDate = r.querySelector('.ort-td[data-col="0"]');
+        const label = tdDate ? tdDate.textContent.trim() : ('Satir ' + (rowIdx + 1));
+        const dateKey = ortParseDateKey(label);
+        const values = partnerCols.map(p => {
+          const td = r.querySelector(`.ort-td[data-col="${p.idx}"]`);
+          return td ? (ortParseNum(td.textContent) || 0) : 0;
+        });
+        return { label: label || ('Satir ' + (rowIdx + 1)), dateKey, values, rowIdx };
+      });
+      const hasAnyDate = timelineRows.some(x => x.dateKey != null);
+      const sortedRows = hasAnyDate
+        ? [...timelineRows].sort((a, b) => {
+            const ak = a.dateKey == null ? Number.MAX_SAFE_INTEGER : a.dateKey;
+            const bk = b.dateKey == null ? Number.MAX_SAFE_INTEGER : b.dateKey;
+            return ak - bk;
+          })
+        : timelineRows;
+      const tlLabels = sortedRows.map(x => x.label);
+      const tlDatasets = partnerCols.map((p, i) => ({
+        label: p.name,
+        data: sortedRows.map(r => r.values[i]),
+        borderColor: ortColorAt(i, 1),
+        backgroundColor: ortColorAt(i, 0.16),
+        borderWidth: 2,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        tension: 0.24,
+        fill: false,
+      }));
+      const tlCtx = timelineCanvas.getContext('2d');
+      ortTimelineChartInstance = new Chart(tlCtx, {
+        type: 'line',
+        data: { labels: tlLabels, datasets: tlDatasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: '#94a3b8',
+                boxWidth: 10,
+                boxHeight: 10,
+                font: { family: "'JetBrains Mono', monospace", size: 10 }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15,23,42,0.95)',
+              borderColor: 'rgba(34,211,238,0.55)',
+              borderWidth: 1,
+              titleColor: '#67e8f9',
+              bodyColor: '#e2e8f0',
+              titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+              bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color:'#64748b', font:{ family:"'JetBrains Mono', monospace", size:10 }, maxRotation:0, autoSkip:true, maxTicksLimit:12 },
+              grid:  { color:'rgba(71,85,105,0.2)' },
+            },
+            y: {
+              ticks: {
+                color:'#64748b',
+                font:{ family:"'JetBrains Mono', monospace", size:10 },
+                callback: v => Number(v).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
+              },
+              grid:  { color:'rgba(71,85,105,0.2)' },
+            }
+          }
+        }
+      });
+    }
   }
 
   function ortToggleDataset(btn, idx) {
