@@ -224,6 +224,25 @@
   .progress-bar-fill { height: 100%; background: linear-gradient(90deg,#10b981,#34d399); border-radius: 2px; transition: width 0.3s ease; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinning { animation: spin 0.8s linear infinite; }
+  .uyari-filter-btn {
+    padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(71,85,105,0.55);
+    background: rgba(15,23,42,0.45); color: #94a3b8; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.02em; transition: all .14s; cursor: pointer;
+  }
+  .uyari-filter-btn:hover { color: #6ee7b7; border-color: rgba(52,211,153,0.45); }
+  .uyari-filter-btn.active {
+    color: #34d399; border-color: rgba(52,211,153,0.7); background: rgba(16,185,129,0.15);
+    box-shadow: 0 0 16px rgba(52,211,153,0.18);
+  }
+  .uyari-card {
+    border: 1px solid rgba(71,85,105,0.35); background: rgba(10,14,26,0.65); border-radius: 10px;
+    padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .uyari-badge {
+    display: inline-flex; align-items: center; padding: 3px 7px; border-radius: 999px;
+    border: 1px solid rgba(52,211,153,0.35); background: rgba(16,185,129,0.12);
+    color: #6ee7b7; font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  }
   .kasa-ctx-separator { height: 1px; background: rgba(71,85,105,0.4); margin: 4px 0; }
   /* ── ORTAKLIK ── */
   #ort-table { border-collapse: collapse; }
@@ -253,6 +272,15 @@
   .ort-col-del-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); opacity: 0; font-size: 9px; color: #f87171; border: none; background: none; cursor: pointer; padding: 0 3px; line-height: 1; transition: opacity .15s; }
   .ort-col-th:hover .ort-col-del-btn { opacity: .65; }
   .ort-col-del-btn:hover { opacity: 1 !important; }
+  /* ── HİSSE Detay Modal ── */
+  #hisse-detail-modal { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.88); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; }
+  #hisse-detail-box { background:#0a0e1a; border:1px solid rgba(52,211,153,0.2); border-radius:18px; width:100%; max-width:960px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.85),0 0 48px rgba(52,211,153,0.06); overflow:hidden; }
+  .hd-period-btn { padding:5px 14px; border-radius:7px; border:1px solid rgba(71,85,105,0.4); background:transparent; color:#64748b; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .hd-period-btn:hover { border-color:rgba(52,211,153,0.5); color:#34d399; }
+  .hd-period-btn.hd-active { background:rgba(52,211,153,0.12); border-color:rgba(52,211,153,0.6); color:#34d399; box-shadow:0 0 10px rgba(52,211,153,0.2); }
+  .hd-stat { background:rgba(15,23,42,0.6); border:1px solid rgba(71,85,105,0.3); border-radius:8px; padding:8px 12px; }
+  .hd-stat-label { font-family:'JetBrains Mono',monospace; font-size:10px; color:#475569; margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+  .hd-stat-value { font-family:'JetBrains Mono',monospace; font-size:13px; color:#e2e8f0; font-weight:600; }
 </style>
   <style>body { box-sizing: border-box; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
@@ -301,9 +329,7 @@
         <i data-lucide="download" class="w-3.5 h-3.5"></i><span>&#x130;&#xe7;eri Aktar</span>
         <input id="ort-import-input" type="file" accept=".csv" class="hidden" onchange="ortImport(this)">
        </label>
-       <button onclick="ortAddCol()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#a78bfa;border-color:rgba(167,139,250,0.4);background:rgba(167,139,250,0.07);box-shadow:0 0 10px rgba(167,139,250,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(167,139,250,0.45)';this.style.borderColor='rgba(167,139,250,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(167,139,250,0.15)';this.style.borderColor='rgba(167,139,250,0.4)'">
-        <i data-lucide="columns" class="w-3.5 h-3.5"></i><span>S&#xfc;tun Ekle</span>
-       </button>
+
       </div>
       <div id="hisse-header-actions" class="flex items-center gap-2" style="display:none">
        <div style="position:relative;display:inline-flex;align-items:center">
@@ -431,6 +457,23 @@
         </div>
       </div>
     </section>
+    <!-- UYARI PAGE -->
+    <section id="page-uyari" class="page flex-col gap-4 w-full">
+      <div class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-4">
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <button class="uyari-filter-btn active" data-uyari-filter="all" onclick="uyariRun('all')">Tümü</button>
+          <button class="uyari-filter-btn" data-uyari-filter="ma" onclick="uyariRun('ma')">MA 20/200</button>
+          <button class="uyari-filter-btn" data-uyari-filter="macd" onclick="uyariRun('macd')">MACD</button>
+          <button class="uyari-filter-btn" data-uyari-filter="rsi" onclick="uyariRun('rsi')">RSI</button>
+          <button class="uyari-filter-btn" data-uyari-filter="bb" onclick="uyariRun('bb')">Bollinger</button>
+          <button class="uyari-filter-btn" data-uyari-filter="vol" onclick="uyariRun('vol')">Hacim</button>
+        </div>
+        <div id="uyari-status" class="mono" style="font-size:12px;color:#64748b">Analiz için buton seçin.</div>
+      </div>
+      <div id="uyari-results" class="flex flex-col gap-2">
+        <div class="mono" style="padding:44px 14px;text-align:center;color:#334155;font-size:13px;border:1px dashed rgba(71,85,105,0.4);border-radius:12px;background:rgba(10,14,26,0.4)">Henüz tarama yapılmadı.</div>
+      </div>
+    </section>
     <!-- ORTAKLIK PAGE -->
     <section id="page-ortaklik" class="page flex-col gap-4 w-full">
       <div id="ort-table-view" class="flex flex-col gap-4">
@@ -463,6 +506,7 @@
      <button data-page="kasa" class="nav-btn active px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="box" class="w-4 h-4"></i><span>KASA</span></button>
      <button data-page="midas" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i><span>MİDAS</span></button>
      <button data-page="hisse" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="trending-up" class="w-4 h-4"></i><span>HİSSE</span></button>
+    <button data-page="uyari" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="siren" class="w-4 h-4"></i><span>UYARI</span></button>
      <button data-page="ortaklik" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="users" class="w-4 h-4"></i><span>ORTAKLIK</span></button>
     </div>
    </nav>
@@ -777,6 +821,7 @@
       document.getElementById('ort-view-toggle-wrap').style.display = target === 'ortaklik' ? 'block' : 'none';
       document.getElementById('hisse-header-actions').style.display = target === 'hisse' ? 'flex' : 'none';
       if (target === 'hisse') hisseOnActivate();
+      if (target === 'uyari') uyariOnActivate();
     });
   });
 
@@ -1364,7 +1409,7 @@
       const chgPctStr = (isPos ? '+' : '') + fmt(chgPct, 2) + '%';
       const bg = i % 2 === 0 ? 'rgba(10,14,26,0.55)' : 'rgba(20,30,50,0.35)';
       const bgh = 'rgba(16,185,129,0.07)';
-      return '<tr class="hisse-row" style="background:' + bg + '" onmouseover="this.style.background=\'' + bgh + '\'" onmouseout="this.style.background=\'' + bg + '\'">' +
+      return '<tr class="hisse-row" style="background:' + bg + ';cursor:pointer" onclick="hisseOpenDetail(\'' + d.symbol + '\')" onmouseover="this.style.background=\'' + bgh + '\'" onmouseout="this.style.background=\'' + bg + '\'">' +
         '<td class="hisse-td mono" style="text-align:center;font-size:11px;color:#334155">' + (i+1) + '</td>' +
         '<td class="hisse-td mono" style="font-weight:700;color:#6ee7b7;font-size:14px">' + sym + '</td>' +
         '<td class="hisse-td" style="color:#94a3b8;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + company + '">' + company + '</td>' +
@@ -1491,6 +1536,218 @@
     if (!hisseInited) { hisseInited = true; hisseFetchAll(); }
   }
 
+  // ── HİSSE Detay Grafik ──────────────────────────────────────────
+  const HISSE_PERIODS = [
+    { label: '1G',  range: '1d',  interval: '5m'  },
+    { label: '5G',  range: '5d',  interval: '15m' },
+    { label: '1A',  range: '1mo', interval: '1d'  },
+    { label: '3A',  range: '3mo', interval: '1d'  },
+    { label: '6A',  range: '6mo', interval: '1d'  },
+    { label: '1Y',  range: '1y',  interval: '1wk' },
+    { label: '3Y',  range: '3y',  interval: '1wk' },
+    { label: '5Y',  range: '5y',  interval: '1wk' },
+  ];
+  let hisseDetailSym = null;
+  let hisseDetailChart = null;
+  let hisseDetailPeriodIdx = 3; // 3A varsayılan
+
+  function hisseOpenDetail(symbol) {
+    hisseDetailSym = symbol;
+    const rawSym = symbol.replace(/\.IS$/i, '');
+    const d = hisseData[rawSym] || {};
+    const name = d.shortName || d.longName || rawSym;
+    const price = d.regularMarketPrice;
+    const chgPct = d.regularMarketChangePercent;
+    const chg = d.regularMarketChange;
+    const isPos = chg > 0, isNeg = chg < 0;
+    const chgColor = isPos ? '#34d399' : isNeg ? '#f87171' : '#94a3b8';
+    const arrow = isPos ? '\u25b2 ' : isNeg ? '\u25bc ' : '';
+    document.getElementById('hd-sym').textContent = rawSym;
+    document.getElementById('hd-name').textContent = name;
+    document.getElementById('hd-price').textContent = price != null ? fmt(price, 2) + ' \u20ba' : '\u2013';
+    const chgEl = document.getElementById('hd-chg');
+    chgEl.textContent = chgPct != null ? arrow + (isPos ? '+' : '') + fmt(chgPct, 2) + '%' : '';
+    chgEl.style.color = chgColor;
+    const bar = document.getElementById('hd-period-bar');
+    bar.innerHTML = HISSE_PERIODS.map((p, i) =>
+      `<button class="hd-period-btn${i === hisseDetailPeriodIdx ? ' hd-active' : ''}" onclick="hisseDetailChangePeriod(${i})">${p.label}</button>`
+    ).join('');
+    document.getElementById('hd-stats-bar').innerHTML = '';
+    document.getElementById('hd-loading').style.display = 'flex';
+    document.getElementById('hisse-detail-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    hisseLoadDetailChart(rawSym);
+  }
+
+  function hisseCloseDetail() {
+    document.getElementById('hisse-detail-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    if (hisseDetailChart) { hisseDetailChart.destroy(); hisseDetailChart = null; }
+  }
+
+  function hisseDetailChangePeriod(idx) {
+    hisseDetailPeriodIdx = idx;
+    document.querySelectorAll('.hd-period-btn').forEach((b, i) => b.classList.toggle('hd-active', i === idx));
+    if (hisseDetailSym) hisseLoadDetailChart(hisseDetailSym.replace(/\.IS$/i, ''));
+  }
+
+  async function hisseLoadDetailChart(sym) {
+    const period = HISSE_PERIODS[hisseDetailPeriodIdx];
+    const loading = document.getElementById('hd-loading');
+    const canvas = document.getElementById('hd-chart-canvas');
+    if (loading) loading.style.display = 'flex';
+    if (hisseDetailChart) { hisseDetailChart.destroy(); hisseDetailChart = null; }
+    const fullSym = sym + '.IS';
+    const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + fullSym + '?range=' + period.range + '&interval=' + period.interval;
+    const proxies = [
+      'http://127.0.0.1:8765/' + yahooUrl,
+      'https://thingproxy.freeboard.io/fetch/' + yahooUrl,
+      'https://corsproxy.io/?' + encodeURIComponent(yahooUrl),
+    ];
+    let data = null;
+    for (const url of proxies) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 12000);
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (!r.ok) continue;
+        const json = await r.json();
+        if (json?.chart?.result?.[0]) { data = json.chart.result[0]; break; }
+      } catch(e) {}
+    }
+    if (loading) loading.style.display = 'none';
+    if (!data) { return; }
+    const meta = data.meta || {};
+    const timestamps = data.timestamp || [];
+    const quotes = data.indicators?.quote?.[0] || {};
+    const closes = quotes.close || [];
+    if (meta.regularMarketPrice) document.getElementById('hd-price').textContent = fmt(meta.regularMarketPrice, 2) + ' \u20ba';
+    if (meta.shortName) document.getElementById('hd-name').textContent = meta.shortName;
+    const points = timestamps.map((ts, i) => ({ ts, v: closes[i] })).filter(p => p.v != null);
+    const labels = points.map(p => {
+      const dt = new Date(p.ts * 1000);
+      if (period.interval === '5m' || period.interval === '15m') return dt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      if (period.range === '1mo' || period.range === '3mo' || period.range === '6mo') return dt.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+      return dt.toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' });
+    });
+    const values = points.map(p => p.v);
+    const firstVal = values[0] || 0;
+    const lastVal = values[values.length - 1] || firstVal;
+    const isUp = lastVal >= firstVal;
+    // Seçili döneme göre getiriyi güncelle
+    if (firstVal > 0) {
+      const periodReturn = ((lastVal - firstVal) / firstVal) * 100;
+      const isReturnPos = periodReturn > 0;
+      const arrow = isReturnPos ? '\u25b2 ' : periodReturn < 0 ? '\u25bc ' : '';
+      const chgEl = document.getElementById('hd-chg');
+      chgEl.textContent = arrow + (isReturnPos ? '+' : '') + fmt(Math.abs(periodReturn), 2) + '%';
+      chgEl.style.color = isReturnPos ? '#34d399' : periodReturn < 0 ? '#f87171' : '#94a3b8';
+    }
+    const lineColor = isUp ? 'rgba(52,211,153,1)' : 'rgba(248,113,113,1)';
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 300);
+    grad.addColorStop(0, isUp ? 'rgba(52,211,153,0.28)' : 'rgba(248,113,113,0.28)');
+    grad.addColorStop(1, isUp ? 'rgba(52,211,153,0.0)' : 'rgba(248,113,113,0.0)');
+    hisseDetailChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          borderColor: lineColor,
+          borderWidth: 2,
+          backgroundColor: grad,
+          fill: true,
+          tension: 0.2,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: lineColor,
+          pointHoverBorderColor: '#0a0e1a',
+          pointHoverBorderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(10,14,26,0.97)',
+            borderColor: isUp ? 'rgba(52,211,153,0.45)' : 'rgba(248,113,113,0.45)',
+            borderWidth: 1,
+            titleColor: '#64748b',
+            bodyColor: '#e2e8f0',
+            titleFont: { family: "'JetBrains Mono', monospace", size: 10 },
+            bodyFont: { family: "'JetBrains Mono', monospace", size: 13, weight: '700' },
+            padding: 12,
+            callbacks: {
+              title: items => items[0]?.label || '',
+              label: item => '  ' + fmt(item.parsed.y, 2) + ' \u20ba',
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color:'#334155', font:{ family:"'JetBrains Mono',monospace", size:10 }, maxTicksLimit:10, maxRotation:0 },
+            grid: { color:'rgba(71,85,105,0.12)' },
+          },
+          y: {
+            position: 'right',
+            ticks: { color:'#475569', font:{ family:"'JetBrains Mono',monospace", size:10 }, callback: v => fmt(v,2) },
+            grid: { color:'rgba(71,85,105,0.12)' },
+          }
+        }
+      }
+    });
+    const stats = [
+      { label: 'Son Fiyat',   value: meta.regularMarketPrice    ? fmt(meta.regularMarketPrice,   2) + ' \u20ba' : '\u2013' },
+      { label: '\u00d6nceki Kap.', value: meta.chartPreviousClose    ? fmt(meta.chartPreviousClose,   2) + ' \u20ba' : '\u2013' },
+      { label: 'G\u00fcn Y\u00fcksek', value: meta.regularMarketDayHigh  ? fmt(meta.regularMarketDayHigh, 2) + ' \u20ba' : '\u2013' },
+      { label: 'G\u00fcn D\u00fc\u015f\u00fck',  value: meta.regularMarketDayLow   ? fmt(meta.regularMarketDayLow,  2) + ' \u20ba' : '\u2013' },
+      { label: '52H Y\u00fcksek',  value: meta.fiftyTwoWeekHigh      ? fmt(meta.fiftyTwoWeekHigh,     2) + ' \u20ba' : '\u2013' },
+      { label: '52H D\u00fc\u015f\u00fck',   value: meta.fiftyTwoWeekLow       ? fmt(meta.fiftyTwoWeekLow,      2) + ' \u20ba' : '\u2013' },
+      { label: 'Hacim',        value: meta.regularMarketVolume   ? fmtVol(meta.regularMarketVolume) : '\u2013' },
+      { label: 'Borsa',        value: meta.exchangeName          || '\u2013' },
+    ];
+    document.getElementById('hd-stats-bar').innerHTML = stats.map(s =>
+      `<div class="hd-stat"><div class="hd-stat-label">${s.label}</div><div class="hd-stat-value">${s.value}</div></div>`
+    ).join('');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const m = document.getElementById('hisse-detail-modal');
+      if (m && m.style.display !== 'none') { hisseCloseDetail(); }
+    }
+  });
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="hisse-detail-modal" onclick="if(event.target===this)hisseCloseDetail()" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+      <div id="hisse-detail-box">
+        <div style="padding:20px 24px 16px;border-bottom:1px solid rgba(71,85,105,0.2);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-shrink:0">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+              <span id="hd-sym" style="font-size:1.4rem;font-weight:800;color:#6ee7b7;font-family:'JetBrains Mono',monospace;letter-spacing:.04em"></span>
+              <span id="hd-name" style="font-size:.9rem;color:#64748b"></span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:14px">
+              <span id="hd-price" style="font-size:2rem;font-weight:700;color:#e2e8f0;font-family:'JetBrains Mono',monospace;line-height:1"></span>
+              <span id="hd-chg" style="font-size:1.05rem;font-weight:600;font-family:'JetBrains Mono',monospace"></span>
+            </div>
+          </div>
+          <button onclick="hisseCloseDetail()" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(71,85,105,0.4);background:transparent;color:#64748b;cursor:pointer;font-size:16px;line-height:1;transition:all .15s;flex-shrink:0" onmouseover="this.style.background='rgba(71,85,105,0.2)';this.style.color='#e2e8f0'" onmouseout="this.style.background='transparent';this.style.color='#64748b'">&#x2715;</button>
+        </div>
+        <div id="hd-period-bar" style="padding:10px 20px;display:flex;gap:6px;border-bottom:1px solid rgba(71,85,105,0.15);flex-shrink:0"></div>
+        <div style="position:relative;flex:1;min-height:300px;padding:12px 16px 8px">
+          <div id="hd-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#334155;font-family:'JetBrains Mono',monospace;font-size:13px">Y&#xfc;kleniyor&#8230;</div>
+          <canvas id="hd-chart-canvas" style="width:100%;height:100%"></canvas>
+        </div>
+        <div id="hd-stats-bar" style="padding:12px 24px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;border-top:1px solid rgba(71,85,105,0.15);flex-shrink:0"></div>
+      </div>
+    </div>`);
+
   // ── ORTAKLIK Spreadsheet ───────────────────────────────────────
   // Korunan: index 0 (TARİH), son-2 (SERMAYE), son-1 (TUTAR)
   // Silinebilir: index 1 .. length-3 (C-H arası kişi sütunları)
@@ -1517,7 +1774,8 @@
     let thHtml = '<tr style="background:rgba(30,41,59,0.4)"><th class="px-2 py-3 text-center text-xs font-semibold mono" style="color:#334155;border-right:1px solid rgba(71,85,105,0.5)">#</th>';
     for (let i = 0; i < n; i++) {
       const canDel = ortIsDeleteable(i);
-      thHtml += `<th class="ort-col-th px-3 py-3 text-center text-xs font-semibold mono uppercase tracking-wider" data-col="${i}" style="color:#a78bfa;white-space:nowrap"><span>${ortColumns[i]}</span>`;
+      const canInsertLeft = i >= 1;
+      thHtml += `<th class="ort-col-th px-3 py-3 text-center text-xs font-semibold mono uppercase tracking-wider" data-col="${i}" style="color:#a78bfa;white-space:nowrap"${canInsertLeft ? ` oncontextmenu="ortColCtxShow(event,${i})"` : ''}><span>${ortColumns[i]}</span>`;
       if (canDel) thHtml += `<button class="ort-col-del-btn" onclick="event.stopPropagation();ortShowDeleteCol(${i})" title="${ortColumns[i]} s\u00fctununu sil">\u2715</button>`;
       thHtml += '</th>';
     }
@@ -1639,6 +1897,43 @@
   }
 
   // ── Sütun yönetimi ────────────────────────────────────────────
+  let ortColCtxTarget = -1;
+
+  function ortColCtxShow(e, colIdx) {
+    e.preventDefault(); e.stopPropagation();
+    ortColCtxTarget = colIdx;
+    const menu = document.getElementById('ort-col-ctx-menu');
+    menu.style.display = 'block';
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    setTimeout(() => {
+      const rect = menu.getBoundingClientRect();
+      if (rect.right > window.innerWidth) menu.style.left = (e.clientX - rect.width) + 'px';
+      if (rect.bottom > window.innerHeight) menu.style.top = (e.clientY - rect.height) + 'px';
+    }, 0);
+  }
+
+  function ortInsertColLeft() {
+    document.getElementById('ort-col-ctx-menu').style.display = 'none';
+    const colIdx = ortColCtxTarget;
+    if (colIdx < 1) return;
+    const name = prompt('Yeni s\u00fctun ad\u0131:', '');
+    if (name === null || !name.trim()) return;
+    const col = name.trim().toUpperCase();
+    ortColumns.splice(colIdx, 0, col);
+    document.querySelectorAll('#ort-tbody .ort-row').forEach(row => {
+      const cells = row.querySelectorAll('.ort-td');
+      const rowIdx = cells.length > 0 ? +cells[0].dataset.row : 0;
+      const td = document.createElement('td');
+      td.dataset.row = rowIdx; td.dataset.col = colIdx;
+      td.className = 'ort-td px-3 py-2 text-sm text-slate-300 mono text-center';
+      td.style.height = '36px'; td.style.overflow = 'hidden';
+      if (cells[colIdx]) row.insertBefore(td, cells[colIdx]); else row.appendChild(td);
+    });
+    ortRenumberCols(); ortRebuildHeader();
+    oSel = null; oSelEnd = null; ortHighlight(); lucide.createIcons();
+  }
+
   function ortAddCol() {
     const name = prompt('Yeni s\u00fctun ad\u0131 (SERMAYE\u2019dan \u00f6nce eklenecek):','');
     if (name===null||!name.trim()) return;
@@ -1810,6 +2105,7 @@
 
   document.addEventListener('click', e => {
     const om=document.getElementById('ort-ctx-menu'); if(om&&!om.contains(e.target)) om.style.display='none';
+    const cm=document.getElementById('ort-col-ctx-menu'); if(cm&&!cm.contains(e.target)) cm.style.display='none';
     const dm=document.getElementById('ort-del-col-modal'); if(dm&&dm.style.display==='flex'&&e.target===dm) ortCancelDeleteCol();
   });
 
@@ -1871,6 +2167,9 @@
       <div class="ort-ctx-item" onclick="ortCtxInsertBelow()">&darr; Alt&#x131;na Sat&#x131;r Ekle</div>
       <div class="kasa-ctx-separator"></div>
       <div class="ort-ctx-item" style="color:#f87171" onclick="ortCtxDeleteRows()">&#x2715; Sat&#x131;r&#x131; Sil</div>
+    </div>
+    <div id="ort-col-ctx-menu" style="position:fixed;z-index:1000;background:#0f172a;border:1px solid rgba(167,139,250,.45);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.6),0 0 16px rgba(109,40,217,.2);padding:4px 0;min-width:170px;display:none">
+      <div class="ort-ctx-item" onclick="ortInsertColLeft()">&#x2190; Sola S&#xfc;tun Ekle</div>
     </div>
     <div id="ort-del-col-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.78);backdrop-filter:blur(5px);align-items:center;justify-content:center">
       <div style="background:#0f172a;border:1px solid rgba(239,68,68,0.5);border-radius:14px;padding:28px 32px;min-width:380px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.85),0 0 32px rgba(239,68,68,0.12)">
