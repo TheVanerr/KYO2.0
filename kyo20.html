@@ -2896,22 +2896,28 @@
   }
 
   async function hisseFetchBatch(symbols) {
+    // ── 1. Yerel proxy /hisse-batch endpoint (Yahoo Finance + crumb, en güvenilir) ──
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 15000);
+      const r = await fetch('http://127.0.0.1:8765/hisse-batch?syms=' + symbols.join(','), { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (r.ok) {
+        const json = await r.json();
+        const result = Object.values(json).filter(q => q && q.regularMarketPrice != null);
+        if (result.length > 0) return result;
+      }
+    } catch(e) { /* proxy çalışmıyor, dış kaynaklara geç */ }
+
+    // ── 2. Yedek: Stooq CSV (dış proxy'lerle) ─────────────────────────────────────
     const symsStooq = symbols.map(s => s.toLowerCase() + '.is').join(',');
     const stooqUrl = 'https://stooq.com/q/l/?s=' + symsStooq + '&f=sd2t2ohlcv&h&e=csv';
-
-    // Proxy denemeleri: CORS sorunu icin
-    const attempts = [
-      // 1. Yerel Python proxy (python proxy.py calisiyorsa - en guvenilir)
-      'http://127.0.0.1:8765/' + stooqUrl,
-      // 2. thingproxy - sunucu tarafli, bozuk headerlari temizler
+    const fallbacks = [
       'https://thingproxy.freeboard.io/fetch/' + stooqUrl,
-      // 3. codetabs proxy
       'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(stooqUrl),
-      // 4. corsproxy.io
       'https://corsproxy.io/?' + encodeURIComponent(stooqUrl),
     ];
-
-    for (const url of attempts) {
+    for (const url of fallbacks) {
       try {
         const ctrl = new AbortController();
         const tid = setTimeout(() => ctrl.abort(), 10000);
@@ -2921,7 +2927,7 @@
         const text = await r.text();
         const result = parseStooqCSV(text);
         if (result.length > 0) return result;
-      } catch(e) { /* sonraki proxy */ }
+      } catch(e) { /* sonraki */ }
     }
     return [];
   }
