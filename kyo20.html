@@ -2268,8 +2268,8 @@
       existing.regularMarketPrice = q.price;
       existing.regularMarketTime = q.time || existing.regularMarketTime;
       hisseData[sym] = existing;
+      if (touched) hisseUpdateRowData(sym); // sadece o satırı güncelle
     });
-    if (touched && typeof hisseRenderTable === 'function') hisseRenderTable();
   }
 
   function paramlaRenderTable(rows, total) {
@@ -2587,6 +2587,8 @@
   let hisseLoadedBatches = 0, hisseTotalBatches = 0;
   let hisseInited = false;
   let hisseUniverse = null;
+  let hisseRowMap = new Map();      // sym → <tr> eleman referansı
+  let hisseTableInited = false;     // tablo iskeleti bir kez oluşturuldu mu
 
   async function hisseGetUniverse() {
     if (Array.isArray(hisseUniverse) && hisseUniverse.length) return hisseUniverse;
@@ -2736,69 +2738,134 @@
       const labels = { sym:'SEMBOL', name:'\u015e\u0130RKET', price:'F\u0130YAT (\u20ba)', chg:'DE\u011e\u0130\u015e\u0130M', pct:'DE\u011e.%', vol:'HAC\u0130M' };
       el.textContent = c === sortCol ? labels[c] + (sortAsc ? ' \u2191' : ' \u2193') : labels[c];
     });
-    hisseRenderTable();
+    hisseSortDom();
+    hisseApplyFilter();
   }
 
   function hisseFilter() {
     hisseFilter_q = (document.getElementById('hisse-search').value || '').toUpperCase().trim();
-    hisseRenderTable();
+    hisseApplyFilter();
   }
 
-  function hisseRenderTable() {
+  // ── Tablo iskeletini bir kez oluştur ──────────────────────────
+  function hisseInitTable(symbols) {
     const tbody = document.getElementById('hisse-tbody');
     if (!tbody) return;
-    let rows = Object.values(hisseData);
-    if (hisseFilter_q) {
-      rows = rows.filter(d => {
-        const sym = (d.symbol || '').replace(/\.IS$/i, '');
-        const name = (d.shortName || d.longName || '').toUpperCase();
-        return sym.includes(hisseFilter_q) || name.includes(hisseFilter_q);
-      });
-    }
+    tbody.innerHTML = '';
+    hisseRowMap.clear();
+    const frag = document.createDocumentFragment();
+    const bgh = 'rgba(16,185,129,0.07)';
+    symbols.forEach((sym, i) => {
+      const bg = i % 2 === 0 ? 'rgba(10,14,26,0.55)' : 'rgba(20,30,50,0.35)';
+      const tr = document.createElement('tr');
+      tr.className = 'hisse-row';
+      tr.dataset.sym = sym;
+      tr.dataset.bg = bg;
+      tr.dataset.name = sym;
+      tr.dataset.price = '0'; tr.dataset.chg = '0';
+      tr.dataset.pct = '0';  tr.dataset.vol = '0';
+      tr.style.cssText = 'background:' + bg + ';cursor:pointer';
+      tr.setAttribute('onclick', 'hisseOpenDetail(\'' + sym + '.IS\')');
+      tr.onmouseover = function() { this.style.background = bgh; };
+      tr.onmouseout  = function() { this.style.background = this.dataset.bg; };
+      tr.innerHTML =
+        '<td class="hisse-td mono" data-cell="idx" style="text-align:center;font-size:11px;color:#334155">' + (i+1) + '</td>' +
+        '<td class="hisse-td mono" data-cell="sym" style="font-weight:700;color:#6ee7b7;font-size:14px">' + sym + '</td>' +
+        '<td class="hisse-td" data-cell="name" style="color:#94a3b8;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + sym + '">' + sym + '</td>' +
+        '<td class="hisse-td mono" data-cell="price" style="text-align:right;font-weight:700;color:#e2e8f0;font-size:14px">\u2013</td>' +
+        '<td class="hisse-td mono" data-cell="chg"   style="text-align:right;font-weight:600">\u2013</td>' +
+        '<td class="hisse-td mono" data-cell="pct"   style="text-align:right;font-weight:700">\u2013</td>' +
+        '<td class="hisse-td mono" data-cell="vol"   style="text-align:right;color:#64748b;font-size:12px">\u2013</td>' +
+        '<td class="hisse-td mono" data-cell="time"  style="text-align:center;color:#475569;font-size:12px">\u2013</td>';
+      frag.appendChild(tr);
+      hisseRowMap.set(sym, tr);
+    });
+    tbody.appendChild(frag);
+    hisseTableInited = true;
+    const count = document.getElementById('hisse-count');
+    if (count) count.textContent = symbols.length + ' hisse';
+  }
+
+  // ── Tek bir satırın hücrelerini güncelle ─────────────────────
+  function hisseUpdateRowData(sym) {
+    const tr = hisseRowMap.get(sym);
+    if (!tr) return;
+    const d = hisseData[sym];
+    if (!d) return;
+    const company = d.shortName || d.longName || sym;
+    const chg = d.regularMarketChange;
+    const chgPct = d.regularMarketChangePercent;
+    const isPos = chg > 0, isNeg = chg < 0;
+    const cc = isPos ? 'pos' : isNeg ? 'neg' : 'neu';
+    const arrow = isPos ? '\u25b2 ' : isNeg ? '\u25bc ' : '';
+    const chgStr   = (isPos ? '+' : '') + fmt(chg, 2);
+    const chgPctStr = (isPos ? '+' : '') + fmt(chgPct, 2) + '%';
+    tr.querySelectorAll('[data-cell]').forEach(td => {
+      switch (td.dataset.cell) {
+        case 'name':  td.textContent = company; td.title = company; break;
+        case 'price': td.textContent = fmt(d.regularMarketPrice, 2); break;
+        case 'chg':   td.textContent = arrow + chgStr;  td.className = 'hisse-td mono ' + cc; break;
+        case 'pct':   td.textContent = chgPctStr;       td.className = 'hisse-td mono ' + cc; break;
+        case 'vol':   td.textContent = fmtVol(d.regularMarketVolume); break;
+        case 'time':  td.textContent = fmtTime(d.regularMarketTime);  break;
+      }
+    });
+    tr.dataset.name  = company.toUpperCase();
+    tr.dataset.price = d.regularMarketPrice || 0;
+    tr.dataset.chg   = d.regularMarketChange || 0;
+    tr.dataset.pct   = d.regularMarketChangePercent || 0;
+    tr.dataset.vol   = d.regularMarketVolume || 0;
+  }
+
+  // ── Mevcut <tr>'leri sırasız DOM'da yeniden sırala ───────────
+  function hisseSortDom() {
+    const tbody = document.getElementById('hisse-tbody');
+    if (!tbody || !hisseTableInited) return;
+    const rows = [...hisseRowMap.values()];
     rows.sort((a, b) => {
+      const sa = a.dataset.sym, sb = b.dataset.sym;
       let va, vb;
-      const sa = (a.symbol || '').replace(/\.IS$/i, '');
-      const sb = (b.symbol || '').replace(/\.IS$/i, '');
-      if (sortCol === 'sym')   { va = sa; vb = sb; }
-      else if (sortCol === 'name')  { va = (a.shortName || a.longName || sa).toUpperCase(); vb = (b.shortName || b.longName || sb).toUpperCase(); }
-      else if (sortCol === 'price') { va = a.regularMarketPrice || 0; vb = b.regularMarketPrice || 0; }
-      else if (sortCol === 'chg')   { va = a.regularMarketChange || 0; vb = b.regularMarketChange || 0; }
-      else if (sortCol === 'pct')   { va = a.regularMarketChangePercent || 0; vb = b.regularMarketChangePercent || 0; }
-      else if (sortCol === 'vol')   { va = a.regularMarketVolume || 0; vb = b.regularMarketVolume || 0; }
+      if      (sortCol === 'sym')   { va = sa; vb = sb; }
+      else if (sortCol === 'name')  { va = a.dataset.name  || sa; vb = b.dataset.name  || sb; }
+      else if (sortCol === 'price') { va = parseFloat(a.dataset.price) || 0; vb = parseFloat(b.dataset.price) || 0; }
+      else if (sortCol === 'chg')   { va = parseFloat(a.dataset.chg)   || 0; vb = parseFloat(b.dataset.chg)   || 0; }
+      else if (sortCol === 'pct')   { va = parseFloat(a.dataset.pct)   || 0; vb = parseFloat(b.dataset.pct)   || 0; }
+      else if (sortCol === 'vol')   { va = parseFloat(a.dataset.vol)   || 0; vb = parseFloat(b.dataset.vol)   || 0; }
       if (va < vb) return sortAsc ? -1 : 1;
-      if (va > vb) return sortAsc ? 1 : -1;
+      if (va > vb) return sortAsc ?  1 : -1;
       return 0;
     });
-    const count = document.getElementById('hisse-count');
-    if (count) count.textContent = rows.length > 0 ? rows.length + ' hisse' : '';
-    if (rows.length === 0) {
-      const msg = Object.keys(hisseData).length === 0 ? 'Y\u00fckleniyor\u2026' : 'E\u015fle\u015fen hisse bulunamad\u0131.';
-      tbody.innerHTML = '<tr><td colspan="8" class="mono" style="padding:48px 16px;text-align:center;color:#334155;font-size:13px">' + msg + '</td></tr>';
-      return;
-    }
-    tbody.innerHTML = rows.map((d, i) => {
-      const sym = (d.symbol || '').replace(/\.IS$/i, '');
-      const company = d.shortName || d.longName || sym;
-      const chg = d.regularMarketChange;
-      const chgPct = d.regularMarketChangePercent;
-      const isPos = chg > 0, isNeg = chg < 0;
-      const cc = isPos ? 'pos' : isNeg ? 'neg' : 'neu';
-      const arrow = isPos ? '\u25b2 ' : isNeg ? '\u25bc ' : '';
-      const chgStr = (isPos ? '+' : '') + fmt(chg, 2);
-      const chgPctStr = (isPos ? '+' : '') + fmt(chgPct, 2) + '%';
+    const frag = document.createDocumentFragment();
+    rows.forEach((tr, i) => {
+      const idxCell = tr.querySelector('[data-cell="idx"]');
+      if (idxCell) idxCell.textContent = i + 1;
       const bg = i % 2 === 0 ? 'rgba(10,14,26,0.55)' : 'rgba(20,30,50,0.35)';
-      const bgh = 'rgba(16,185,129,0.07)';
-      return '<tr class="hisse-row" style="background:' + bg + ';cursor:pointer" onclick="hisseOpenDetail(\'' + d.symbol + '\')" onmouseover="this.style.background=\'' + bgh + '\'" onmouseout="this.style.background=\'' + bg + '\'">' +
-        '<td class="hisse-td mono" style="text-align:center;font-size:11px;color:#334155">' + (i+1) + '</td>' +
-        '<td class="hisse-td mono" style="font-weight:700;color:#6ee7b7;font-size:14px">' + sym + '</td>' +
-        '<td class="hisse-td" style="color:#94a3b8;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + company + '">' + company + '</td>' +
-        '<td class="hisse-td mono" style="text-align:right;font-weight:700;color:#e2e8f0;font-size:14px">' + fmt(d.regularMarketPrice, 2) + '</td>' +
-        '<td class="hisse-td mono ' + cc + '" style="text-align:right;font-weight:600">' + arrow + chgStr + '</td>' +
-        '<td class="hisse-td mono ' + cc + '" style="text-align:right;font-weight:700">' + chgPctStr + '</td>' +
-        '<td class="hisse-td mono" style="text-align:right;color:#64748b;font-size:12px">' + fmtVol(d.regularMarketVolume) + '</td>' +
-        '<td class="hisse-td mono" style="text-align:center;color:#475569;font-size:12px">' + fmtTime(d.regularMarketTime) + '</td>' +
-        '</tr>';
-    }).join('');
+      tr.dataset.bg = bg;
+      // hover sırasında değiştirilmemiş ise zemin rengini güncelle
+      if (tr.style.background !== 'rgba(16,185,129,0.07)') tr.style.background = bg;
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+  }
+
+  // ── Arama filtresini satır show/hide ile uygula ──────────────
+  function hisseApplyFilter() {
+    let visible = 0;
+    hisseRowMap.forEach((tr, sym) => {
+      const name = (tr.dataset.name || sym).toUpperCase();
+      const match = !hisseFilter_q || sym.includes(hisseFilter_q) || name.includes(hisseFilter_q);
+      tr.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    const count = document.getElementById('hisse-count');
+    if (count) count.textContent = visible > 0 ? visible + ' hisse' : '';
+  }
+
+  // ── Eski tam render — artık sadece sırala + filtrele ─────────
+  function hisseRenderTable() {
+    if (!hisseTableInited) return;
+    hisseSortDom();
+    hisseApplyFilter();
   }
 
   function parseYahooSpark(json) {
@@ -2867,33 +2934,45 @@
     if (pw) pw.style.display = 'block';
     if (pb) pb.style.width = '0%';
     const symbols = await hisseGetUniverse();
-    hisseData = {};
+    // Tablo iskeletini sadece ilk seferinde oluştur
+    if (!hisseTableInited) hisseInitTable(symbols);
     hisseLoadedBatches = 0;
     const batches = [];
     for (let i = 0; i < symbols.length; i += HISSE_BATCH) batches.push(symbols.slice(i, i + HISSE_BATCH));
     hisseTotalBatches = batches.length;
-    if (status) status.textContent = '0 / ' + symbols.length + ' arand\u0131...';
-    await Promise.all(batches.map(async (batch) => {
-      const quotes = await hisseFetchBatch(batch);
-      quotes.forEach(q => {
-        if (q && q.regularMarketPrice != null) {
-          const sym = (q.symbol || '').replace(/\.IS$/i, '');
-          hisseData[sym] = q;
-        }
-      });
-      hisseLoadedBatches++;
-      const done = Math.min(hisseLoadedBatches * HISSE_BATCH, symbols.length);
-      if (status) status.textContent = done + ' / ' + symbols.length + ' arand\u0131...';
-      if (pb) pb.style.width = Math.round((hisseLoadedBatches / hisseTotalBatches) * 100) + '%';
-      hisseRenderTable();
-    }));
+    if (status) status.textContent = '0 / ' + symbols.length + ' y\u00fckleniyor...';
+    // Eş zamanlı en fazla 3 batch — proxy sağlıklı kalır
+    const CONCURRENCY = 3;
+    let batchIdx = 0, loaded = 0;
+    async function runWorker() {
+      while (batchIdx < batches.length) {
+        const myBatch = batches[batchIdx++];
+        const quotes = await hisseFetchBatch(myBatch);
+        quotes.forEach(q => {
+          if (q && q.regularMarketPrice != null) {
+            const sym = (q.symbol || '').replace(/\.IS$/i, '');
+            hisseData[sym] = q;
+            hisseUpdateRowData(sym); // sadece o satırın hücrelerini güncelle
+          }
+        });
+        loaded += myBatch.length;
+        hisseLoadedBatches++;
+        if (status) status.textContent = Math.min(loaded, symbols.length) + ' / ' + symbols.length + ' y\u00fcklendi...';
+        if (pb) pb.style.width = Math.round((hisseLoadedBatches / hisseTotalBatches) * 100) + '%';
+      }
+    }
+    const workers = [];
+    for (let i = 0; i < Math.min(CONCURRENCY, batches.length); i++) workers.push(runWorker());
+    await Promise.all(workers);
+    // Tüm veri gelince tek seferinde sırala
+    hisseSortDom();
+    hisseApplyFilter();
     if (btn) btn.disabled = false;
     if (icon) icon.classList.remove('spinning');
     if (pb) { pb.style.width = '100%'; setTimeout(() => { if (pw) pw.style.display = 'none'; }, 600); }
     const now = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const n = Object.keys(hisseData).length;
     if (status) status.textContent = 'son: ' + now + ' \u2014 ' + n + ' hisse';
-    hisseRenderTable();
     hisseResetCountdown();
     lucide.createIcons();
   }
