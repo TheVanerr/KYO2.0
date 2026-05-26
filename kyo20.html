@@ -234,6 +234,26 @@
     color: #34d399; border-color: rgba(52,211,153,0.7); background: rgba(16,185,129,0.15);
     box-shadow: 0 0 16px rgba(52,211,153,0.18);
   }
+  .paramla-tf-btn {
+    padding: 6px 11px;
+    border-radius: 8px;
+    border: 1px solid rgba(71,85,105,0.55);
+    background: rgba(15,23,42,0.45);
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all .14s;
+  }
+  .paramla-tf-btn:hover { color: #67e8f9; border-color: rgba(34,211,238,0.45); }
+  .paramla-tf-btn.active {
+    color: #22d3ee;
+    border-color: rgba(34,211,238,0.7);
+    background: rgba(8,145,178,0.18);
+    box-shadow: 0 0 14px rgba(34,211,238,0.18);
+  }
   .uyari-card {
     border: 1px solid rgba(71,85,105,0.35); background: rgba(10,14,26,0.65); border-radius: 10px;
     padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -272,6 +292,28 @@
   .ort-col-del-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); opacity: 0; font-size: 9px; color: #f87171; border: none; background: none; cursor: pointer; padding: 0 3px; line-height: 1; transition: opacity .15s; }
   .ort-col-th:hover .ort-col-del-btn { opacity: .65; }
   .ort-col-del-btn:hover { opacity: 1 !important; }
+  /* ── HS ── */
+  #hs-table { border-collapse: collapse; }
+  #hs-table th { border: 1px solid rgba(71,85,105,0.4); }
+  #hs-table td { border: 1px solid rgba(71,85,105,0.3); outline: none; cursor: default; transition: background .12s, box-shadow .12s; }
+  #hs-table td:focus { background: rgba(167,139,250,.12) !important; box-shadow: inset 0 0 0 2px rgba(167,139,250,.55); position: relative; z-index: 1; }
+  #hs-table tr:hover td { background: rgba(30,41,59,.35); }
+  #hs-table tr:hover td:focus { background: rgba(167,139,250,.12) !important; }
+  #hs-grid { outline: none; }
+  #hs-row-count::-webkit-outer-spin-button, #hs-row-count::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #hs-row-count { -moz-appearance: textfield; appearance: textfield; }
+  .hs-td { cursor: default; user-select: none; caret-color: transparent; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .hs-td[contenteditable="true"] { cursor: text; user-select: text; caret-color: #c4b5fd; }
+  .hs-td.hs-anchor { background: rgba(109,40,217,.28); border-color: rgba(167,139,250,.45) !important; }
+  .hs-td.hs-range  { background: rgba(109,40,217,.22); border-color: rgba(167,139,250,.45) !important; }
+  #hs-sel-overlay { position: absolute; pointer-events: none; border: 2px solid rgba(192,132,252,.95); box-shadow: 0 0 10px rgba(167,139,250,.6), 0 0 22px rgba(109,40,217,.35); z-index: 10; display: none; }
+  .hs-td.hs-editing { box-shadow: inset 0 0 0 2px rgba(167,139,250,1) !important; background: rgba(91,33,182,.15) !important; }
+  .hs-td.hs-cut { outline: 2px dashed rgba(167,139,250,.6); outline-offset: -2px; }
+  .hs-row:hover .hs-td:not(.hs-anchor):not(.hs-range):not(.hs-editing) { background: rgba(30,41,59,.3); }
+  .hs-row-num { background: rgba(15,23,42,.75); color: #475569; font-size: .68rem; font-family: 'JetBrains Mono',monospace; text-align: center; cursor: pointer; user-select: none; border-right: 1px solid rgba(71,85,105,.5) !important; padding: 0 6px; transition: background .1s, color .1s; }
+  .hs-row-num:hover { background: rgba(91,33,182,.2); color: #a78bfa; }
+  .hs-row-num.hs-row-selected { background: rgba(91,33,182,.38) !important; color: #c4b5fd; }
+  .hs-td.hs-computed { color: #93c5fd; background: rgba(14,116,144,0.14); }
   /* ── HİSSE Detay Modal ── */
   #hisse-detail-modal { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.88); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; }
   #hisse-detail-box { background:#0a0e1a; border:1px solid rgba(52,211,153,0.2); border-radius:18px; width:100%; max-width:960px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.85),0 0 48px rgba(52,211,153,0.06); overflow:hidden; }
@@ -304,6 +346,11 @@
         <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>
        </button>
       </div>
+      <div id="hs-view-toggle-wrap" style="display:none;margin-left:10px">
+       <button id="hs-view-toggle" onclick="hsToggleView()" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07);box-shadow:0 0 10px rgba(52,211,153,0.15);min-width:5.5rem" onmouseover="this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)'">
+        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>
+       </button>
+      </div>
      </div>
      <div class="flex items-center gap-3">
       <div id="kasa-header-actions" class="flex items-center gap-2">
@@ -331,6 +378,18 @@
        </label>
 
       </div>
+  <div id="hs-header-actions" class="flex items-center gap-2" style="display:none">
+   <button id="hs-save-btn" onclick="hsSave()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#22d3ee;border-color:rgba(34,211,238,0.4);background:rgba(34,211,238,0.07);box-shadow:0 0 10px rgba(34,211,238,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(34,211,238,0.45)';this.style.borderColor='rgba(34,211,238,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(34,211,238,0.15)';this.style.borderColor='rgba(34,211,238,0.4)'">
+    <i data-lucide="save" class="w-3.5 h-3.5"></i><span>Kaydet</span>
+   </button>
+   <button onclick="hsExport()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#fb923c;border-color:rgba(251,146,60,0.4);background:rgba(251,146,60,0.07);box-shadow:0 0 10px rgba(251,146,60,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(251,146,60,0.45)';this.style.borderColor='rgba(251,146,60,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(251,146,60,0.15)';this.style.borderColor='rgba(251,146,60,0.4)'">
+    <i data-lucide="upload" class="w-3.5 h-3.5"></i><span>D&#x131;&#x15F;ar&#x131; Aktar</span>
+   </button>
+   <label class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all cursor-pointer" style="color:#f472b6;border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.07);box-shadow:0 0 10px rgba(244,114,182,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(244,114,182,0.45)';this.style.borderColor='rgba(244,114,182,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(244,114,182,0.15)';this.style.borderColor='rgba(244,114,182,0.4)'">
+    <i data-lucide="download" class="w-3.5 h-3.5"></i><span>&#x130;&#xe7;eri Aktar</span>
+    <input id="hs-import-input" type="file" accept=".csv" class="hidden" onchange="hsImport(this)">
+   </label>
+  </div>
       <div id="hisse-header-actions" class="flex items-center gap-2" style="display:none">
        <div style="position:relative;display:inline-flex;align-items:center">
         <i data-lucide="search" style="width:13px;height:13px;color:#475569;position:absolute;left:10px;pointer-events:none"></i>
@@ -417,18 +476,124 @@
       <span>Satır Ekle</span>
       <input id="kasa-row-count" type="number" min="1" value="1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.stopPropagation();kasaAddRows();}" class="w-12 px-1 py-0.5 rounded text-xs font-semibold mono text-center bg-transparent border" style="color:#a78bfa;border:1px solid rgba(139,92,246,0.5);outline:none;" />
      </button>
-    </section><!-- MİDAS PAGE -->
-    <section id="page-midas" class="page flex-col gap-6 max-w-5xl mx-auto">
-     <div>
-      <div class="flex items-center gap-2 mb-1"><i data-lucide="layers" class="w-4 h-4 text-yellow-400"></i> <span class="label-tag mono">MİDAS</span>
+    </section><!-- HS PAGE -->
+    <section id="page-hs" class="page flex-col gap-6 w-full">
+      <div id="hs-table-view" class="flex flex-col gap-4">
+        <div id="hs-grid" tabindex="0" class="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden" style="outline:none">
+          <div class="overflow-x-auto" style="position:relative">
+            <div id="hs-sel-overlay"></div>
+            <table id="hs-table" class="w-full" style="table-layout:fixed">
+              <colgroup>
+                <col style="width:4%">
+                <col style="width:9%">
+                <col style="width:13%">
+                <col style="width:10%">
+                <col style="width:8%">
+                <col style="width:10%">
+                <col style="width:10%">
+                <col style="width:10%">
+                <col style="width:10%">
+                <col style="width:8%">
+                <col style="width:8%">
+              </colgroup>
+              <thead>
+                <tr class="bg-slate-800/40">
+                  <th class="px-2 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider" style="border-right:1px solid rgba(71,85,105,0.5)">#</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TARİH</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">HİSSE KODU</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">ALIŞ FİYATI</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">ADET</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">MALİYET</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">S.TARİHİ</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">SATIŞ FİYATI</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TUTAR</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">KAR</th>
+                  <th class="px-3 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">%</th>
+                </tr>
+              </thead>
+              <tbody id="hs-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <button onclick="hsAddRows()" class="mt-2 w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-xs font-semibold mono transition" style="color:#a78bfa;border:1px dashed rgba(139,92,246,0.4);background:transparent;" onmouseover="this.style.background='rgba(91,33,182,0.15)';this.style.borderColor='rgba(167,139,250,0.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(139,92,246,0.4)'">
+          <i data-lucide="plus" class="w-3.5 h-3.5 flex-shrink-0"></i>
+          <span>Sat&#x131;r Ekle</span>
+          <input id="hs-row-count" type="number" min="1" value="1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.stopPropagation();hsAddRows();}" class="w-12 px-1 py-0.5 rounded text-xs font-semibold mono text-center bg-transparent border" style="color:#a78bfa;border:1px solid rgba(139,92,246,0.5);outline:none;" />
+        </button>
       </div>
-      <h2 class="text-3xl font-bold text-white">MİDAS</h2>
-      <p class="text-slate-400 text-sm mt-1">MİDAS sayfası içeriği burada yer alacak.</p>
-      <div class="header-line mt-4"></div>
-     </div>
-     <div class="placeholder-card rounded-xl p-10 text-center"><i data-lucide="layers" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-      <p class="text-slate-500 mono text-sm">// MİDAS sayfası hazırlanacak</p>
-     </div>
+      <div id="hs-chart-view" style="display:none" class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-5">
+        <div style="display:grid;grid-template-columns:minmax(320px,0.95fr) minmax(0,1.45fr);gap:14px;align-items:start;">
+          <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
+            <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#34d399;text-transform:uppercase;margin-bottom:10px">Satılmamış Hisseler Dağılımı</div>
+            <div style="position:relative;height:360px">
+              <canvas id="hs-pie-canvas"></canvas>
+            </div>
+          </div>
+          <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
+            <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#22d3ee;text-transform:uppercase;margin-bottom:10px">Alış Tarihine Göre Değişim</div>
+            <div style="position:relative;height:360px">
+              <canvas id="hs-timeline-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- PARAMLA PAGE -->
+    <section id="page-paramla" class="page flex-col gap-6 w-full">
+      <div class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-4">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-3">
+          <div class="flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-400"></i> <span class="label-tag mono">PARAMLA</span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button id="paramla-range-hourly" class="paramla-tf-btn active" onclick="paramlaSetRange('hourly')">SAATLİK</button>
+            <button id="paramla-range-daily" class="paramla-tf-btn" onclick="paramlaSetRange('daily')">GÜNLÜK</button>
+            <button id="paramla-range-weekly" class="paramla-tf-btn" onclick="paramlaSetRange('weekly')">HAFTALIK</button>
+            <button id="paramla-range-yearly" class="paramla-tf-btn" onclick="paramlaSetRange('yearly')">YILLIK</button>
+            <button id="paramla-refresh-btn" onclick="paramlaRefresh(true)" class="btn-refresh" style="padding:6px 10px;font-size:11px">
+              <i data-lucide="refresh-cw" id="paramla-refresh-icon" class="w-3.5 h-3.5"></i> Yenile
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap" style="margin-bottom:10px">
+          <div class="mono" style="font-size:12px;color:#67e8f9">Toplam Değer: <span id="paramla-total" style="color:#e2e8f0;font-weight:700">0,00 TL</span></div>
+          <div id="paramla-updated" class="mono" style="font-size:11px;color:#64748b">–</div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(320px,1fr) minmax(0,1.6fr);gap:14px;align-items:start;">
+          <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
+            <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#34d399;text-transform:uppercase;margin-bottom:10px">Anlık Dağılım</div>
+            <div style="position:relative;height:320px">
+              <canvas id="paramla-pie-canvas"></canvas>
+            </div>
+          </div>
+          <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
+            <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#22d3ee;text-transform:uppercase;margin-bottom:10px">Portföy Değer Grafiği</div>
+            <div style="position:relative;height:320px">
+              <canvas id="paramla-line-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden">
+        <div style="overflow-x:auto;width:100%">
+          <table style="width:100%;border-collapse:collapse;table-layout:auto">
+            <thead>
+              <tr>
+                <th class="hisse-th dim" style="text-align:center;width:44px">#</th>
+                <th class="hisse-th" style="text-align:left">SEMBOL</th>
+                <th class="hisse-th" style="text-align:right">ADET</th>
+                <th class="hisse-th" style="text-align:right">ANLIK FİYAT</th>
+                <th class="hisse-th" style="text-align:right">ANLIK DEĞER</th>
+                <th class="hisse-th" style="text-align:right">PORTFÖY ORANI</th>
+                <th class="hisse-th dim" style="text-align:center">SAAT</th>
+              </tr>
+            </thead>
+            <tbody id="paramla-tbody">
+              <tr><td colspan="7" class="mono" style="padding:36px 16px;text-align:center;color:#334155;font-size:13px">HS verisi bekleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
     <!-- HİSSE PAGE -->
     <section id="page-hisse" class="page flex-col gap-4 w-full">
@@ -530,7 +695,8 @@
    <nav class="fixed bottom-4 left-4 z-50">
     <div class="bg-slate-900/90 backdrop-blur-md border border-slate-700/60 rounded-xl p-1.5 shadow-2xl shadow-black/50 flex gap-1">
      <button data-page="kasa" class="nav-btn active px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="box" class="w-4 h-4"></i><span>KASA</span></button>
-     <button data-page="midas" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i><span>MİDAS</span></button>
+    <button data-page="hs" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i><span>HS</span></button>
+    <button data-page="paramla" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="wallet" class="w-4 h-4"></i><span>PARAMLA</span></button>
      <button data-page="hisse" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="trending-up" class="w-4 h-4"></i><span>HİSSE</span></button>
     <button data-page="uyari" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="siren" class="w-4 h-4"></i><span>UYARI</span></button>
      <button data-page="ortaklik" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="users" class="w-4 h-4"></i><span>ORTAKLIK</span></button>
@@ -844,10 +1010,14 @@
       document.getElementById(`page-${target}`).classList.add('active');
       document.getElementById('kasa-header-actions').style.display = target === 'kasa' ? 'flex' : 'none';
       document.getElementById('ort-header-actions').style.display = target === 'ortaklik' ? 'flex' : 'none';
+      document.getElementById('hs-header-actions').style.display = target === 'hs' ? 'flex' : 'none';
       document.getElementById('ort-view-toggle-wrap').style.display = target === 'ortaklik' ? 'block' : 'none';
+      document.getElementById('hs-view-toggle-wrap').style.display = target === 'hs' ? 'block' : 'none';
       document.getElementById('hisse-header-actions').style.display = target === 'hisse' ? 'flex' : 'none';
       if (target === 'hisse') hisseOnActivate();
       if (target === 'uyari') uyariOnActivate();
+      if (target === 'hs') hsSetView(false);
+      if (target === 'paramla') paramlaOnActivate();
     });
   });
 
@@ -1117,6 +1287,13 @@
       if (e.key==='c') { e.preventDefault(); kasaCopy(false); }
       else if (e.key==='x') { e.preventDefault(); kasaCopy(true); }
       else if (e.key==='v') { e.preventDefault(); kasaPaste(); }
+      else if (e.key.toLowerCase()==='a') {
+        e.preventDefault();
+        kRowSelMode = false;
+        kSel = { r: 0, c: 0 };
+        kSelEnd = { r: Math.max(0, kasaRowCount - 1), c: KASA_COLS - 1 };
+        kasaHighlight();
+      }
       return;
     }
     const arrows={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
@@ -1277,6 +1454,1031 @@
       kasaRenumberRows();
     } catch(e) {}
   })();
+
+  // ── HS Spreadsheet ─────────────────────────────────────────────
+  const HS_COLS = 10;
+  let hsRowCount = 0;
+  let hSel = null, hSelEnd = null, hEditCell = null;
+  let hClip = null, hCutCells = [];
+  let hRowSelMode = false;
+  let hsChartMode = false;
+  let hsPieChart = null;
+  let hsTimelineChart = null;
+
+  function hsIsComputedCol(c) {
+    return c === 4 || c === 7 || c === 8 || c === 9;
+  }
+
+  function hsParseInputNum(v) {
+    if (v == null) return 0;
+    const s = String(v).trim();
+    if (!s) return 0;
+    const clean = s.replace(/[^\d,.-]/g, '');
+    if (!clean) return 0;
+    const comma = clean.lastIndexOf(',');
+    const dot = clean.lastIndexOf('.');
+    const decPos = Math.max(comma, dot);
+    let normalized;
+    if (decPos >= 0) {
+      const intPart = clean.slice(0, decPos).replace(/[.,]/g, '');
+      const fracPart = clean.slice(decPos + 1).replace(/[.,]/g, '');
+      normalized = intPart + '.' + fracPart;
+    } else {
+      normalized = clean.replace(/[.,]/g, '');
+    }
+    const n = parseFloat(normalized);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function hsFmtMoney(v) {
+    if (v == null || isNaN(v)) return '';
+    return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function hsFmtPct(v) {
+    if (v == null || isNaN(v)) return '';
+    return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  }
+
+  function hsCell(r, c) {
+    return document.querySelector(`#hs-tbody td[data-row="${r}"][data-col="${c}"]`);
+  }
+
+  function hsCreateRow() {
+    const r = hsRowCount++;
+    const row = document.createElement('tr');
+    row.className = 'hs-row';
+    const numTd = document.createElement('td');
+    numTd.className = 'hs-row-num';
+    numTd.textContent = '–';
+    row.appendChild(numTd);
+    for (let c = 0; c < HS_COLS; c++) {
+      const td = document.createElement('td');
+      td.dataset.row = r;
+      td.dataset.col = c;
+      td.className = 'hs-td px-3 py-2 text-sm text-slate-300 mono text-center' + (hsIsComputedCol(c) ? ' hs-computed' : '');
+      td.style.height = '36px';
+      td.style.overflow = 'hidden';
+      row.appendChild(td);
+    }
+    return row;
+  }
+
+  function hsRenumberRows() {
+    document.querySelectorAll('#hs-tbody .hs-row').forEach((row, i) => {
+      const n = row.querySelector('.hs-row-num');
+      if (n) n.textContent = i + 1;
+    });
+  }
+
+  function hsRecalcRow(row) {
+    const cells = row.querySelectorAll('.hs-td');
+    if (cells.length < HS_COLS) return;
+    const alis = hsParseInputNum(cells[2].textContent);
+    const adet = hsParseInputNum(cells[3].textContent);
+    const satis = hsParseInputNum(cells[6].textContent);
+    const maliyet = alis * adet;
+    const tutar = satis * adet;
+    const kar = tutar - maliyet;
+    const pct = maliyet !== 0 ? (kar / maliyet) * 100 : null;
+    cells[4].textContent = hsFmtMoney(maliyet);
+    cells[7].textContent = hsFmtMoney(tutar);
+    cells[8].textContent = hsFmtMoney(kar);
+    cells[9].textContent = pct == null ? '' : hsFmtPct(pct);
+  }
+
+  function hsRecalcAll() {
+    document.querySelectorAll('#hs-tbody .hs-row').forEach(row => hsRecalcRow(row));
+    if (hsChartMode) hsRenderCharts();
+    paramlaScheduleRefresh();
+  }
+
+  function hsPalette(i) {
+    const colors = ['#22d3ee', '#34d399', '#f59e0b', '#f472b6', '#60a5fa', '#f87171', '#a78bfa', '#2dd4bf', '#fb7185', '#c084fc', '#84cc16', '#06b6d4'];
+    return colors[i % colors.length];
+  }
+
+  function hsParseDateKey(v) {
+    const s = (v || '').trim();
+    if (!s) return '';
+    let m = s.match(/^(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2,4})$/);
+    if (m) {
+      let y = m[3];
+      if (y.length === 2) y = '20' + y;
+      return `${y.padStart(4, '0')}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+    }
+    m = s.match(/^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})$/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${mo}-${da}`;
+    }
+    return '';
+  }
+
+  function hsGetChartRows() {
+    const rows = [];
+    document.querySelectorAll('#hs-tbody .hs-row').forEach((row, i) => {
+      const cells = row.querySelectorAll('.hs-td');
+      if (cells.length < HS_COLS) return;
+      const alisTarihRaw = (cells[0].textContent || '').trim();
+      const alisTarihKey = hsParseDateKey(alisTarihRaw);
+      const hisse = ((cells[1].textContent || '').trim().toUpperCase()) || ('SATIR-' + (i + 1));
+      const alis = hsParseInputNum(cells[2].textContent);
+      const adet = hsParseInputNum(cells[3].textContent);
+      const maliyetCell = hsParseInputNum(cells[4].textContent);
+      const maliyet = maliyetCell || (alis * adet);
+      const satisTarih = (cells[5].textContent || '').trim();
+      const satisTarihKey = hsParseDateKey(satisTarih);
+      const satis = hsParseInputNum(cells[6].textContent);
+      const tutarCell = hsParseInputNum(cells[7].textContent);
+      const tutar = tutarCell || (satis * adet);
+      const isSold = !!satisTarih || satis > 0 || tutar > 0;
+      const kar = isSold ? (tutar - maliyet) : 0;
+      if (!maliyet && !tutar && !kar) return;
+      rows.push({
+        label: hisse,
+        hisse,
+        alisTarihKey,
+        satisTarihKey,
+        maliyet,
+        tutar,
+        kar,
+        isSold,
+      });
+    });
+    return rows;
+  }
+
+  function hsRenderCharts() {
+    const pieCanvas = document.getElementById('hs-pie-canvas');
+    const timelineCanvas = document.getElementById('hs-timeline-canvas');
+    if (!pieCanvas || !timelineCanvas || typeof Chart === 'undefined') return;
+    const rows = hsGetChartRows();
+
+    const unsoldMap = new Map();
+    rows.forEach(r => {
+      if (r.isSold || !r.maliyet) return;
+      unsoldMap.set(r.hisse, (unsoldMap.get(r.hisse) || 0) + r.maliyet);
+    });
+
+    const pieLabels = [...unsoldMap.keys()];
+    const pieValues = [...unsoldMap.values()];
+    if (!pieLabels.length) {
+      pieLabels.push('Satılmamış hisse yok');
+      pieValues.push(1);
+    }
+
+    if (hsPieChart) { hsPieChart.destroy(); hsPieChart = null; }
+    hsPieChart = new Chart(pieCanvas.getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: pieValues,
+          borderColor: '#0f172a',
+          borderWidth: 2,
+          backgroundColor: pieLabels.map((_, i) => hsPalette(i)),
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          hsPiePctLabels: {
+            enabled: unsoldMap.size > 0,
+            values: pieValues,
+          },
+          legend: { labels: { color: '#cbd5e1', boxWidth: 10 } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                if (!unsoldMap.size) return ctx.label;
+                const total = pieValues.reduce((a, b) => a + b, 0);
+                const val = ctx.raw || 0;
+                const pct = total ? ((val / total) * 100) : 0;
+                return `${ctx.label}: ${val.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL (${pct.toFixed(2)}%)`;
+              }
+            }
+          }
+        },
+      },
+      plugins: [{
+        id: 'hsPiePctLabels',
+        afterDatasetsDraw(chart, args, opts) {
+          if (!opts || !opts.enabled) return;
+          const values = opts.values || [];
+          const total = values.reduce((a, b) => a + b, 0);
+          if (!total) return;
+          const ctx = chart.ctx;
+          const meta = chart.getDatasetMeta(0);
+          ctx.save();
+          ctx.font = '700 11px JetBrains Mono';
+          ctx.fillStyle = '#e2e8f0';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          meta.data.forEach((arc, i) => {
+            const val = values[i] || 0;
+            const pct = (val / total) * 100;
+            if (pct < 3) return;
+            const p = arc.tooltipPosition();
+            ctx.fillText(pct.toFixed(1) + '%', p.x, p.y);
+          });
+          ctx.restore();
+        }
+      }],
+    });
+
+    const eventMap = new Map();
+    rows.forEach(r => {
+      if (r.alisTarihKey && r.maliyet) {
+        eventMap.set(r.alisTarihKey, (eventMap.get(r.alisTarihKey) || 0) + r.maliyet);
+      }
+      if (r.satisTarihKey && r.maliyet) {
+        eventMap.set(r.satisTarihKey, (eventMap.get(r.satisTarihKey) || 0) - r.maliyet);
+      }
+    });
+
+    const fmtDateLabel = (key) => {
+      const m = String(key || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return key;
+      return `${m[3]}.${m[2]}.${m[1]}`;
+    };
+
+    let labels = [...eventMap.keys()].sort((a, b) => a.localeCompare(b));
+    if (!labels.length) labels = ['Veri yok'];
+
+    const totalSeries = [];
+    let portfolioTotal = 0;
+    labels.forEach(d => {
+      portfolioTotal += eventMap.get(d) || 0;
+      totalSeries.push(portfolioTotal);
+    });
+
+    if (hsTimelineChart) { hsTimelineChart.destroy(); hsTimelineChart = null; }
+    hsTimelineChart = new Chart(timelineCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels.map(fmtDateLabel),
+        datasets: [
+          {
+            label: 'Portföy Toplam Değeri',
+            data: totalSeries.length ? totalSeries : [0],
+            borderColor: '#22d3ee',
+            backgroundColor: 'rgba(34,211,238,0.14)',
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 3,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: { display: true, text: 'İşlem Tarihi', color: '#94a3b8' },
+            ticks: { color: '#94a3b8', maxRotation: 0, autoSkip: true },
+            grid: { color: 'rgba(71,85,105,0.2)' }
+          },
+          y: {
+            title: { display: true, text: 'Portföy Toplam Değeri (TL)', color: '#94a3b8' },
+            ticks: {
+              color: '#94a3b8',
+              callback: (v) => Number(v).toLocaleString('tr-TR')
+            },
+            grid: { color: 'rgba(71,85,105,0.2)' }
+          },
+        },
+        plugins: {
+          legend: { labels: { color: '#cbd5e1' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${(ctx.raw || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TL`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function hsSetView(chartMode) {
+    hsChartMode = !!chartMode;
+    const tableView = document.getElementById('hs-table-view');
+    const chartView = document.getElementById('hs-chart-view');
+    const btn = document.getElementById('hs-view-toggle');
+    if (tableView) tableView.style.display = hsChartMode ? 'none' : 'flex';
+    if (chartView) chartView.style.display = hsChartMode ? 'block' : 'none';
+    if (btn) {
+      const span = btn.querySelector('span');
+      if (span) span.textContent = hsChartMode ? 'Veri' : 'Grafik';
+    }
+    if (hsChartMode) hsRenderCharts();
+  }
+
+  function hsToggleView() {
+    hsSetView(!hsChartMode);
+  }
+
+  function hsAddRow() {
+    document.getElementById('hs-tbody').appendChild(hsCreateRow());
+    hsRenumberRows();
+    hsRecalcAll();
+  }
+
+  function hsAddRows() {
+    const n = Math.max(1, parseInt(document.getElementById('hs-row-count').value) || 1);
+    for (let i = 0; i < n; i++) document.getElementById('hs-tbody').appendChild(hsCreateRow());
+    hsRenumberRows();
+    hsRecalcAll();
+    lucide.createIcons();
+  }
+
+  function hsUpdateOverlay() {
+    const ol = document.getElementById('hs-sel-overlay');
+    if (!ol || !hSel) { if (ol) ol.style.display = 'none'; return; }
+    const r1 = Math.min(hSel.r, (hSelEnd || hSel).r), r2 = Math.max(hSel.r, (hSelEnd || hSel).r);
+    const c1 = Math.min(hSel.c, (hSelEnd || hSel).c), c2 = Math.max(hSel.c, (hSelEnd || hSel).c);
+    const tl = hsCell(r1, c1), br = hsCell(r2, c2);
+    if (!tl || !br) { ol.style.display = 'none'; return; }
+    const cont = ol.parentElement;
+    const cR = cont.getBoundingClientRect(), tlR = tl.getBoundingClientRect(), brR = br.getBoundingClientRect();
+    ol.style.display = 'block';
+    ol.style.left = (tlR.left - cR.left + cont.scrollLeft) + 'px';
+    ol.style.top = (tlR.top - cR.top + cont.scrollTop) + 'px';
+    ol.style.width = (brR.right - tlR.left) + 'px';
+    ol.style.height = (brR.bottom - tlR.top) + 'px';
+  }
+
+  function hsHighlight() {
+    document.querySelectorAll('#hs-tbody .hs-td').forEach(td => td.classList.remove('hs-anchor', 'hs-range'));
+    document.querySelectorAll('#hs-tbody .hs-row-num').forEach(td => td.classList.remove('hs-row-selected'));
+    if (!hSel) { hsUpdateOverlay(); return; }
+    const r1 = Math.min(hSel.r, (hSelEnd || hSel).r), r2 = Math.max(hSel.r, (hSelEnd || hSel).r);
+    const c1 = Math.min(hSel.c, (hSelEnd || hSel).c), c2 = Math.max(hSel.c, (hSelEnd || hSel).c);
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
+        const td = hsCell(r, c);
+        if (!td) continue;
+        td.classList.add(r === hSel.r && c === hSel.c ? 'hs-anchor' : 'hs-range');
+      }
+      if (hRowSelMode) {
+        const fd = hsCell(r, 0);
+        if (fd) {
+          const nt = fd.closest('tr').querySelector('.hs-row-num');
+          if (nt) nt.classList.add('hs-row-selected');
+        }
+      }
+    }
+    hsUpdateOverlay();
+  }
+
+  function hsEnterEdit(td, clear) {
+    if (!td || hEditCell === td) return;
+    const colIdx = +td.dataset.col;
+    if (hsIsComputedCol(colIdx)) return;
+    hsExitEdit();
+    hEditCell = td;
+    td.contentEditable = 'true';
+    td.classList.add('hs-editing');
+    if (clear) td.textContent = '';
+    td.focus();
+    if (!clear) {
+      const rng = document.createRange();
+      rng.selectNodeContents(td);
+      rng.collapse(false);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(rng);
+    }
+  }
+
+  function hsExitEdit() {
+    if (!hEditCell) return;
+    hEditCell.contentEditable = 'false';
+    hEditCell.classList.remove('hs-editing');
+    hEditCell = null;
+    hsRecalcAll();
+  }
+
+  function hsMoveSel(dr, dc, extend) {
+    if (!hSel) return;
+    const ref = extend ? (hSelEnd || hSel) : hSel;
+    let nr = Math.max(0, ref.r + dr), nc = Math.max(0, Math.min(HS_COLS - 1, ref.c + dc));
+    while (nr >= hsRowCount) hsAddRow();
+    if (extend) hSelEnd = { r: nr, c: nc };
+    else { hSel = { r: nr, c: nc }; hSelEnd = null; }
+    hsHighlight();
+  }
+
+  function hsClearSel() {
+    if (!hSel) return;
+    const r1 = Math.min(hSel.r, (hSelEnd || hSel).r), r2 = Math.max(hSel.r, (hSelEnd || hSel).r);
+    const c1 = Math.min(hSel.c, (hSelEnd || hSel).c), c2 = Math.max(hSel.c, (hSelEnd || hSel).c);
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
+        if (hsIsComputedCol(c)) continue;
+        const t = hsCell(r, c);
+        if (t) t.textContent = '';
+      }
+    }
+    hsRecalcAll();
+  }
+
+  function hsCopy(cut) {
+    if (!hSel) return;
+    const r1 = Math.min(hSel.r, (hSelEnd || hSel).r), r2 = Math.max(hSel.r, (hSelEnd || hSel).r);
+    const c1 = Math.min(hSel.c, (hSelEnd || hSel).c), c2 = Math.max(hSel.c, (hSelEnd || hSel).c);
+    const data = [];
+    for (let r = r1; r <= r2; r++) {
+      const row = [];
+      for (let c = c1; c <= c2; c++) {
+        const t = hsCell(r, c);
+        row.push(t ? t.textContent : '');
+      }
+      data.push(row);
+    }
+    hCutCells.forEach(t => t.classList.remove('hs-cut'));
+    hCutCells = [];
+    hClip = { data, cut };
+    if (cut) {
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          const t = hsCell(r, c);
+          if (t && !hsIsComputedCol(c)) {
+            t.classList.add('hs-cut');
+            hCutCells.push(t);
+          }
+        }
+      }
+    }
+  }
+
+  function hsPaste() {
+    if (!hClip || !hSel) return;
+    const { data, cut } = hClip;
+    const sr = hSel.r, sc = hSel.c;
+    while (hsRowCount < sr + data.length) hsAddRow();
+    for (let dr = 0; dr < data.length; dr++) {
+      for (let dc = 0; dc < data[dr].length; dc++) {
+        const col = sc + dc;
+        if (col >= HS_COLS || hsIsComputedCol(col)) continue;
+        const t = hsCell(sr + dr, col);
+        if (t) t.textContent = data[dr][dc];
+      }
+    }
+    if (cut) {
+      hCutCells.forEach(t => { t.textContent = ''; t.classList.remove('hs-cut'); });
+      hCutCells = [];
+      hClip = null;
+    }
+    hsRecalcAll();
+  }
+
+  function hsDeleteSelectedRows() {
+    if (!hSel) return;
+    const r1 = Math.min(hSel.r, (hSelEnd || hSel).r), r2 = Math.max(hSel.r, (hSelEnd || hSel).r);
+    for (let r = r1; r <= r2; r++) {
+      const td = hsCell(r, 0);
+      if (td) td.closest('tr').remove();
+    }
+    hSel = null; hSelEnd = null; hRowSelMode = false;
+    hsHighlight();
+    hsRenumberRows();
+    hsRecalcAll();
+  }
+
+  const hsGrid = document.getElementById('hs-grid');
+  let hDragging = false;
+
+  hsGrid.addEventListener('mousedown', e => {
+    const numTd = e.target.closest('#hs-tbody .hs-row-num');
+    if (numTd) {
+      if (hEditCell) hsExitEdit();
+      const firstData = numTd.closest('tr').querySelector('.hs-td');
+      if (!firstData) return;
+      const r = +firstData.dataset.row;
+      if (e.shiftKey && hSel && hRowSelMode) {
+        hSelEnd = { r, c: HS_COLS - 1 };
+        hSel = { r: hSel.r, c: 0 };
+      } else {
+        hSel = { r, c: 0 };
+        hSelEnd = { r, c: HS_COLS - 1 };
+      }
+      hRowSelMode = true;
+      hsHighlight();
+      hsGrid.focus();
+      hDragging = true;
+      e.preventDefault();
+      return;
+    }
+    const td = e.target.closest('#hs-tbody .hs-td');
+    if (!td) {
+      if (hEditCell) { hsExitEdit(); hsHighlight(); }
+      return;
+    }
+    if (hEditCell && hEditCell !== td) hsExitEdit();
+    hRowSelMode = false;
+    const r = +td.dataset.row, c = +td.dataset.col;
+    if (e.shiftKey && hSel) hSelEnd = { r, c };
+    else { hSel = { r, c }; hSelEnd = null; }
+    hsHighlight();
+    hsGrid.focus();
+    hDragging = true;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mouseover', e => {
+    if (!hDragging || !hSel) return;
+    if (hRowSelMode) {
+      const el = e.target.closest('#hs-tbody .hs-row-num') || e.target.closest('#hs-tbody .hs-td');
+      if (!el) return;
+      const tr = el.closest('tr');
+      const firstData = tr.querySelector('.hs-td');
+      if (!firstData) return;
+      hSelEnd = { r: +firstData.dataset.row, c: HS_COLS - 1 };
+      hSel = { r: hSel.r, c: 0 };
+    } else {
+      const td = e.target.closest('#hs-tbody .hs-td');
+      if (!td) return;
+      hSelEnd = { r: +td.dataset.row, c: +td.dataset.col };
+    }
+    hsHighlight();
+  });
+
+  document.addEventListener('mouseup', () => { hDragging = false; });
+
+  hsGrid.addEventListener('dblclick', e => {
+    const td = e.target.closest('#hs-tbody .hs-td');
+    if (!td) return;
+    hSel = { r: +td.dataset.row, c: +td.dataset.col };
+    hSelEnd = null;
+    hsHighlight();
+    hsEnterEdit(td, false);
+  });
+
+  hsGrid.addEventListener('keydown', e => {
+    if (hEditCell) {
+      if (e.key === 'Escape') { e.preventDefault(); hsExitEdit(); hsHighlight(); hsGrid.focus(); }
+      else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); hsExitEdit(); hsMoveSel(1, 0, false); hsGrid.focus(); }
+      else if (e.key === 'Tab') { e.preventDefault(); hsExitEdit(); hsMoveSel(0, e.shiftKey ? -1 : 1, false); hsGrid.focus(); }
+      return;
+    }
+    if (!hSel) return;
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'c') { e.preventDefault(); hsCopy(false); }
+      else if (e.key === 'x') { e.preventDefault(); hsCopy(true); }
+      else if (e.key === 'v') { e.preventDefault(); hsPaste(); }
+      else if (e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        hRowSelMode = false;
+        hSel = { r: 0, c: 0 };
+        hSelEnd = { r: Math.max(0, hsRowCount - 1), c: HS_COLS - 1 };
+        hsHighlight();
+      }
+      return;
+    }
+    const arrows = { ArrowUp: [-1,0], ArrowDown: [1,0], ArrowLeft: [0,-1], ArrowRight: [0,1] };
+    if (arrows[e.key]) { e.preventDefault(); hsMoveSel(...arrows[e.key], e.shiftKey); return; }
+    if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); if (hRowSelMode) hsDeleteSelectedRows(); else hsClearSel(); return; }
+    if (e.key === 'F2') { e.preventDefault(); hsEnterEdit(hsCell(hSel.r, hSel.c), false); return; }
+    if (e.key === 'Enter') { e.preventDefault(); hsEnterEdit(hsCell(hSel.r, hSel.c), false); return; }
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) hsEnterEdit(hsCell(hSel.r, hSel.c), true);
+  });
+
+  function hsGetData() {
+    const rows = [];
+    document.querySelectorAll('#hs-tbody .hs-row').forEach(row => {
+      const cells = row.querySelectorAll('.hs-td');
+      rows.push([...cells].map(td => td.textContent));
+    });
+    return rows;
+  }
+
+  function hsNormalizeRow(cols) {
+    const arr = Array.isArray(cols) ? cols.slice() : [];
+    if (arr.length >= 11) arr.splice(1, 1); // eski NO sütununu kaldır
+    while (arr.length < HS_COLS) arr.push('');
+    return arr.slice(0, HS_COLS);
+  }
+
+  function hsSave() {
+    localStorage.setItem('hs-data', JSON.stringify(hsGetData()));
+    const btn = document.getElementById('hs-save-btn');
+    const orig = btn.style.boxShadow;
+    btn.style.boxShadow = '0 0 24px rgba(34,211,238,0.8)';
+    setTimeout(() => btn.style.boxShadow = orig, 800);
+  }
+
+  function hsExport() {
+    const rows = hsGetData();
+    const headers = ['TARİH','HİSSE KODU','ALIŞ FİYATI','ADET','MALİYET','S.TARİHİ','SATIŞ FİYATI','TUTAR','KAR','%'];
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(','))].join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8' }));
+    a.download = 'hs-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function hsImport(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const lines = e.target.result.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
+      const dataLines = lines.slice(1);
+      const tbody = document.getElementById('hs-tbody');
+      tbody.innerHTML = '';
+      hsRowCount = 0;
+      dataLines.forEach(line => {
+        const cols = line.split(',').map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+        const mapped = hsNormalizeRow(cols);
+        const row = hsCreateRow();
+        row.querySelectorAll('.hs-td').forEach((td, i) => {
+          if (hsIsComputedCol(i)) return;
+          if (mapped[i] !== undefined) td.textContent = mapped[i];
+        });
+        tbody.appendChild(row);
+      });
+      hsRenumberRows();
+      hsRecalcAll();
+      hSel = null; hSelEnd = null; hRowSelMode = false; hsHighlight();
+    };
+    reader.readAsText(file, 'utf-8');
+    input.value = '';
+  }
+
+  for (let i = 0; i < 15; i++) hsAddRow();
+  hsSetView(false);
+
+  (function() {
+    const saved = localStorage.getItem('hs-data');
+    if (!saved) return;
+    try {
+      const rows = JSON.parse(saved);
+      const tbody = document.getElementById('hs-tbody');
+      tbody.innerHTML = '';
+      hsRowCount = 0;
+      rows.forEach(cols => {
+        const mapped = hsNormalizeRow(cols);
+        const row = hsCreateRow();
+        row.querySelectorAll('.hs-td').forEach((td, i) => {
+          if (hsIsComputedCol(i)) return;
+          if (mapped[i] !== undefined) td.textContent = mapped[i];
+        });
+        tbody.appendChild(row);
+      });
+      hsRenumberRows();
+      hsRecalcAll();
+    } catch (e) {}
+  })();
+
+  // ── PARAMLA Live Portfolio ────────────────────────────────────
+  const PARAMLA_REFRESH_MS = 30000;
+  var paramlaRange = 'hourly';
+  var paramlaPieChart = null;
+  var paramlaLineChart = null;
+  var paramlaHistory = [];
+  var paramlaInterval = null;
+  var paramlaRefreshBusy = false;
+  var paramlaRefreshQueued = false;
+  var paramlaAutoEnabled = false;
+
+  function paramlaFmtMoney(v) {
+    if (v == null || isNaN(v)) return '0,00';
+    return Number(v).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function paramlaPalette(i) {
+    const colors = ['#22d3ee','#34d399','#f59e0b','#f472b6','#60a5fa','#f87171','#a78bfa','#2dd4bf','#fb7185','#c084fc','#84cc16','#06b6d4'];
+    return colors[i % colors.length];
+  }
+
+  function paramlaGetHoldings() {
+    const map = new Map();
+    document.querySelectorAll('#hs-tbody .hs-row').forEach(row => {
+      const cells = row.querySelectorAll('.hs-td');
+      if (cells.length < HS_COLS) return;
+      const sym = ((cells[1].textContent || '').trim().toUpperCase());
+      if (!sym) return;
+      const adet = hsParseInputNum(cells[3].textContent);
+      if (adet <= 0) return;
+      const satTarih = (cells[5].textContent || '').trim();
+      const satFiyat = hsParseInputNum(cells[6].textContent);
+      if (satTarih || satFiyat > 0) return;
+      map.set(sym, (map.get(sym) || 0) + adet);
+    });
+    return [...map.entries()].map(([symbol, qty]) => ({ symbol, qty }));
+  }
+
+  async function paramlaFetchQuotes(symbols) {
+    const out = {};
+    if (!symbols.length) return out;
+    const yahooSymbols = symbols.map(s => s + '.IS').join(',');
+    const quoteUrl = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' + yahooSymbols;
+    const attempts = [
+      'http://127.0.0.1:8765/' + quoteUrl,
+      'https://thingproxy.freeboard.io/fetch/' + quoteUrl,
+      'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(quoteUrl),
+      'https://corsproxy.io/?' + encodeURIComponent(quoteUrl),
+    ];
+
+    for (const url of attempts) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 11000);
+        const r = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (!r.ok) continue;
+        const json = await r.json();
+        const arr = json?.quoteResponse?.result || [];
+        if (!arr.length) continue;
+        arr.forEach(item => {
+          const sym = String(item.symbol || '').replace(/\.IS$/i, '').toUpperCase();
+          const price = Number(item.regularMarketPrice ?? item.postMarketPrice ?? 0);
+          if (!sym || !price || isNaN(price)) return;
+          out[sym] = {
+            price,
+            time: item.regularMarketTime || Math.floor(Date.now() / 1000),
+          };
+        });
+        if (Object.keys(out).length) return out;
+      } catch (e) { }
+    }
+
+    try {
+      const fallback = await hisseFetchBatch(symbols);
+      fallback.forEach(q => {
+        const sym = String(q.symbol || '').replace(/\.IS$/i, '').toUpperCase();
+        const price = Number(q.regularMarketPrice || 0);
+        if (!sym || !price || isNaN(price)) return;
+        out[sym] = {
+          price,
+          time: q.regularMarketTime || Math.floor(Date.now() / 1000),
+        };
+      });
+    } catch (e) { }
+    return out;
+  }
+
+  function paramlaSyncHisseData(quotes) {
+    let touched = false;
+    Object.entries(quotes).forEach(([sym, q]) => {
+      if (!q || !q.price) return;
+      const symbol = sym + '.IS';
+      const existing = hisseData[sym] || {
+        symbol,
+        shortName: sym,
+        longName: sym,
+        regularMarketPrice: 0,
+        regularMarketChange: 0,
+        regularMarketChangePercent: 0,
+        regularMarketVolume: 0,
+        regularMarketTime: q.time,
+      };
+      if (existing.regularMarketPrice !== q.price) touched = true;
+      existing.regularMarketPrice = q.price;
+      existing.regularMarketTime = q.time || existing.regularMarketTime;
+      hisseData[sym] = existing;
+    });
+    if (touched && typeof hisseRenderTable === 'function') hisseRenderTable();
+  }
+
+  function paramlaRenderTable(rows, total) {
+    const tbody = document.getElementById('paramla-tbody');
+    if (!tbody) return;
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="mono" style="padding:36px 16px;text-align:center;color:#334155;font-size:13px">Elde hisse bulunamadı.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map((r, i) => {
+      const ratio = total > 0 ? (r.value / total * 100) : 0;
+      return '<tr class="hisse-row">' +
+        '<td class="hisse-td mono" style="text-align:center;color:#334155">' + (i + 1) + '</td>' +
+        '<td class="hisse-td mono" style="font-weight:700;color:#6ee7b7">' + r.symbol + '</td>' +
+        '<td class="hisse-td mono" style="text-align:right;color:#cbd5e1">' + paramlaFmtMoney(r.qty) + '</td>' +
+        '<td class="hisse-td mono" style="text-align:right;color:#e2e8f0">' + paramlaFmtMoney(r.price) + ' TL</td>' +
+        '<td class="hisse-td mono" style="text-align:right;color:#22d3ee;font-weight:700">' + paramlaFmtMoney(r.value) + ' TL</td>' +
+        '<td class="hisse-td mono" style="text-align:right;color:#94a3b8">' + ratio.toFixed(2) + '%</td>' +
+        '<td class="hisse-td mono" style="text-align:center;color:#64748b">' + new Date((r.time || Math.floor(Date.now()/1000)) * 1000).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function paramlaRenderPie(rows) {
+    const canvas = document.getElementById('paramla-pie-canvas');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const labels = rows.length ? rows.map(r => r.symbol) : ['Veri yok'];
+    const vals = rows.length ? rows.map(r => r.value) : [1];
+    if (paramlaPieChart) { paramlaPieChart.destroy(); paramlaPieChart = null; }
+    paramlaPieChart = new Chart(canvas.getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [{
+          data: vals,
+          backgroundColor: labels.map((_, i) => paramlaPalette(i)),
+          borderColor: '#0f172a',
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#cbd5e1', boxWidth: 10 } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                if (!rows.length) return ctx.label;
+                const total = vals.reduce((a, b) => a + b, 0);
+                const val = ctx.raw || 0;
+                const pct = total ? (val / total * 100) : 0;
+                return `${ctx.label}: ${paramlaFmtMoney(val)} TL (${pct.toFixed(2)}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function paramlaLoadHistory() {
+    try {
+      const raw = localStorage.getItem('paramla-history-v1');
+      const arr = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(arr)) return;
+      paramlaHistory = arr.filter(x => x && x.ts && typeof x.value === 'number');
+    } catch (e) {
+      paramlaHistory = [];
+    }
+  }
+
+  function paramlaSaveHistory() {
+    try {
+      localStorage.setItem('paramla-history-v1', JSON.stringify(paramlaHistory.slice(-5000)));
+    } catch (e) { }
+  }
+
+  function paramlaAppendHistory(value) {
+    const now = Date.now();
+    const last = paramlaHistory[paramlaHistory.length - 1];
+    if (!last || (now - last.ts) >= 60000 || Math.abs(last.value - value) > 0.01) {
+      paramlaHistory.push({ ts: now, value });
+    }
+    const keepAfter = now - (1000 * 60 * 60 * 24 * 550);
+    paramlaHistory = paramlaHistory.filter(p => p.ts >= keepAfter);
+    paramlaSaveHistory();
+  }
+
+  function paramlaSeriesForRange() {
+    const now = Date.now();
+    const cfg = {
+      hourly: { span: 1000 * 60 * 60 * 24, bucket: 1000 * 60 * 30, fmt: (d) => d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) },
+      daily: { span: 1000 * 60 * 60 * 24 * 45, bucket: 1000 * 60 * 60 * 24, fmt: (d) => d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }) },
+      weekly: { span: 1000 * 60 * 60 * 24 * 365, bucket: 1000 * 60 * 60 * 24 * 7, fmt: (d) => d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }) },
+      yearly: { span: 1000 * 60 * 60 * 24 * 365 * 3, bucket: 1000 * 60 * 60 * 24 * 30, fmt: (d) => d.toLocaleDateString('tr-TR', { month: '2-digit', year: 'numeric' }) },
+    }[paramlaRange] || {
+      span: 1000 * 60 * 60 * 24,
+      bucket: 1000 * 60 * 30,
+      fmt: (d) => d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const filtered = paramlaHistory.filter(p => p.ts >= (now - cfg.span));
+    const bucketed = new Map();
+    filtered.forEach(p => {
+      const key = Math.floor(p.ts / cfg.bucket) * cfg.bucket;
+      bucketed.set(key, p);
+    });
+    const points = [...bucketed.values()].sort((a, b) => a.ts - b.ts);
+    return {
+      labels: points.length ? points.map(p => cfg.fmt(new Date(p.ts))) : ['Veri yok'],
+      values: points.length ? points.map(p => p.value) : [0],
+    };
+  }
+
+  function paramlaRenderLine() {
+    const canvas = document.getElementById('paramla-line-canvas');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const series = paramlaSeriesForRange();
+    if (paramlaLineChart) { paramlaLineChart.destroy(); paramlaLineChart = null; }
+    paramlaLineChart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: series.labels,
+        datasets: [{
+          label: 'Portföy Değeri',
+          data: series.values,
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34,211,238,0.16)',
+          borderWidth: 2.6,
+          tension: 0.28,
+          pointRadius: 2.2,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(71,85,105,0.2)' } },
+          y: {
+            ticks: {
+              color: '#94a3b8',
+              callback: (v) => Number(v).toLocaleString('tr-TR')
+            },
+            grid: { color: 'rgba(71,85,105,0.2)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: '#cbd5e1' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${paramlaFmtMoney(ctx.raw || 0)} TL`,
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function paramlaSetRange(range) {
+    paramlaRange = range;
+    ['hourly','daily','weekly','yearly'].forEach(r => {
+      const btn = document.getElementById('paramla-range-' + r);
+      if (!btn) return;
+      btn.classList.toggle('active', r === range);
+    });
+    paramlaRenderLine();
+  }
+
+  function paramlaSetLoading(isLoading) {
+    const icon = document.getElementById('paramla-refresh-icon');
+    const btn = document.getElementById('paramla-refresh-btn');
+    if (icon) icon.classList.toggle('spinning', !!isLoading);
+    if (btn) btn.disabled = !!isLoading;
+  }
+
+  function paramlaScheduleRefresh() {
+    if (!paramlaAutoEnabled) return;
+    if (paramlaRefreshQueued) return;
+    paramlaRefreshQueued = true;
+    setTimeout(() => {
+      paramlaRefreshQueued = false;
+      paramlaRefresh();
+    }, 250);
+  }
+
+  async function paramlaRefresh(force) {
+    if (paramlaRefreshBusy) return;
+    paramlaRefreshBusy = true;
+    paramlaSetLoading(true);
+    try {
+      const holdings = paramlaGetHoldings();
+      const symbols = holdings.map(h => h.symbol);
+      const quotes = await paramlaFetchQuotes(symbols);
+      paramlaSyncHisseData(quotes);
+
+      const rows = holdings.map(h => {
+        const q = quotes[h.symbol] || { price: 0, time: Math.floor(Date.now() / 1000) };
+        const value = h.qty * (q.price || 0);
+        return { symbol: h.symbol, qty: h.qty, price: q.price || 0, value, time: q.time };
+      }).sort((a, b) => b.value - a.value);
+
+      const total = rows.reduce((s, r) => s + r.value, 0);
+      const totalEl = document.getElementById('paramla-total');
+      if (totalEl) totalEl.textContent = paramlaFmtMoney(total) + ' TL';
+      const upd = document.getElementById('paramla-updated');
+      if (upd) upd.textContent = 'son: ' + new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      paramlaRenderTable(rows, total);
+      paramlaRenderPie(rows);
+      paramlaAppendHistory(total);
+      paramlaRenderLine();
+    } catch (e) {
+      const upd = document.getElementById('paramla-updated');
+      if (upd) upd.textContent = 'güncellenemedi';
+    } finally {
+      paramlaSetLoading(false);
+      paramlaRefreshBusy = false;
+    }
+  }
+
+  function paramlaOnActivate() {
+    if (!paramlaAutoEnabled) {
+      paramlaAutoEnabled = true;
+      paramlaLoadHistory();
+      paramlaSetRange(paramlaRange);
+      paramlaRefresh(true);
+      paramlaInterval = setInterval(() => { paramlaRefresh(); }, PARAMLA_REFRESH_MS);
+    } else {
+      paramlaRefresh(true);
+    }
+  }
 
   // Sidebar toggle
   function toggleSidebar() {
@@ -2634,6 +3836,13 @@
       if (e.key==='c'){e.preventDefault();ortCopy(false);}
       else if (e.key==='x'){e.preventDefault();ortCopy(true);}
       else if (e.key==='v'){e.preventDefault();ortPaste();}
+      else if (e.key.toLowerCase()==='a'){
+        e.preventDefault();
+        oRowSelMode = false;
+        oSel = { r: 0, c: 0 };
+        oSelEnd = { r: Math.max(0, ortRowCount - 1), c: ortColumns.length - 1 };
+        ortHighlight();
+      }
       return;
     }
     const arrows={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
