@@ -1416,6 +1416,7 @@
   }
 
   function kasaSave() {
+    if (!sbUser || !sbIsAdmin()) { alert('Bu işlem için yönetici girişi gereklidir.'); return; }
     localStorage.setItem('kasa-data', JSON.stringify(kasaGetData()));
     kasaSaveSupabase();
     const btn = document.querySelector('#kasa-header-actions button');
@@ -2087,6 +2088,7 @@
   }
 
   function hsSave() {
+    if (!sbUser || !sbIsAdmin()) { alert('Bu işlem için yönetici girişi gereklidir.'); return; }
     localStorage.setItem('hs-data', JSON.stringify(hsGetData()));
     hsSaveSupabase();
     const btn = document.getElementById('hs-save-btn');
@@ -3930,6 +3932,7 @@
     return { columns: ortColumns.slice(), rows };
   }
   function ortSave() {
+    if (!sbUser || !sbIsAdmin()) { alert('Bu işlem için yönetici girişi gereklidir.'); return; }
     localStorage.setItem('ort-data', JSON.stringify(ortGetData()));
     ortSaveSupabase();
     const btn=document.getElementById('ort-save-btn');
