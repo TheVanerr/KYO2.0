@@ -2576,7 +2576,7 @@
     'ZEDUR','ZOREN','ZRGYO'
   ];
 
-  const HISSE_BATCH = 20;
+  const HISSE_BATCH = 50;
   const HISSE_SYMBOLS_URL = 'bist606.json';
   const HISSE_TARGET_COUNT = 606;
   let hisseData = {};
@@ -2868,44 +2868,47 @@
     hisseApplyFilter();
   }
 
-  function parseYahooSpark(json) {
-    if (!json || typeof json !== 'object') return [];
-    return Object.entries(json).map(([symbol, v]) => {
-      if (!v || !v.close || !v.close.length) return null;
-      const closes = v.close;
-      const price = closes[closes.length - 1];
-      const prev = v.chartPreviousClose || (closes.length > 1 ? closes[closes.length - 2] : price);
-      if (!price || price <= 0) return null;
-      const change = price - prev;
-      const changePct = prev > 0 ? (change / prev * 100) : 0;
-      const ts = v.timestamp ? v.timestamp[v.timestamp.length - 1] : null;
+  function parseStooqCSV(text) {
+    if (!text) return [];
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    return lines.slice(1).filter(l => l.trim()).map(line => {
+      const p = line.split(',');
+      if (p.length < 7) return null;
+      const rawSym = (p[0] || '').trim().toUpperCase();
+      const o = parseFloat(p[3]) || 0;
+      const c = parseFloat(p[6]) || 0;
+      const v = parseFloat(p[7]) || 0;
+      if (!c || c <= 0 || isNaN(c)) return null;
+      const chg = c - o;
+      const chgPct = o > 0 ? (chg / o * 100) : 0;
       return {
-        symbol: symbol,
-        shortName: symbol.replace(/\.IS$/i, ''),
-        longName: symbol.replace(/\.IS$/i, ''),
-        regularMarketPrice: price,
-        regularMarketChange: change,
-        regularMarketChangePercent: changePct,
-        regularMarketVolume: 0,
-        regularMarketTime: ts
+        symbol: rawSym,
+        shortName: rawSym.replace(/\.IS$/i, ''),
+        longName: rawSym.replace(/\.IS$/i, ''),
+        regularMarketPrice: c,
+        regularMarketChange: chg,
+        regularMarketChangePercent: chgPct,
+        regularMarketVolume: v,
+        regularMarketTime: null
       };
     }).filter(Boolean);
   }
 
   async function hisseFetchBatch(symbols) {
-    const symsYahoo = symbols.map(s => s + '.IS').join(',');
-    const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/spark?symbols=' + symsYahoo + '&range=5d&interval=1d';
+    const symsStooq = symbols.map(s => s.toLowerCase() + '.is').join(',');
+    const stooqUrl = 'https://stooq.com/q/l/?s=' + symsStooq + '&f=sd2t2ohlcv&h&e=csv';
 
     // Proxy denemeleri: CORS sorunu icin
     const attempts = [
       // 1. Yerel Python proxy (python proxy.py calisiyorsa - en guvenilir)
-      'http://127.0.0.1:8765/' + yahooUrl,
-      // 2. thingproxy
-      'https://thingproxy.freeboard.io/fetch/' + yahooUrl,
+      'http://127.0.0.1:8765/' + stooqUrl,
+      // 2. thingproxy - sunucu tarafli, bozuk headerlari temizler
+      'https://thingproxy.freeboard.io/fetch/' + stooqUrl,
       // 3. codetabs proxy
-      'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(yahooUrl),
+      'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(stooqUrl),
       // 4. corsproxy.io
-      'https://corsproxy.io/?' + encodeURIComponent(yahooUrl),
+      'https://corsproxy.io/?' + encodeURIComponent(stooqUrl),
     ];
 
     for (const url of attempts) {
@@ -2915,8 +2918,8 @@
         const r = await fetch(url, { signal: ctrl.signal });
         clearTimeout(tid);
         if (!r.ok) continue;
-        const json = await r.json();
-        const result = parseYahooSpark(json);
+        const text = await r.text();
+        const result = parseStooqCSV(text);
         if (result.length > 0) return result;
       } catch(e) { /* sonraki proxy */ }
     }
