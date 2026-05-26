@@ -8,6 +8,7 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <style>
   body {
@@ -410,7 +411,7 @@
         <span id="hisse-timer" class="mono" style="font-size:11px;color:#64748b;margin-left:4px">–</span>
        </div>
       </div>
-      <button class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition text-sm font-semibold" style="background:rgba(91,33,182,0.2);border-color:rgba(139,92,246,0.5);color:#c4b5fd;box-shadow:0 0 12px rgba(139,92,246,0.25);" onmouseover="this.style.boxShadow='0 0 20px rgba(139,92,246,0.5)';this.style.borderColor='rgba(167,139,250,0.8)';this.style.color='#ede9fe'" onmouseout="this.style.boxShadow='0 0 12px rgba(139,92,246,0.25)';this.style.borderColor='rgba(139,92,246,0.5)';this.style.color='#c4b5fd'">
+      <button id="sb-auth-btn" onclick="sbAuthBtnClick()" class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition text-sm font-semibold" style="background:rgba(91,33,182,0.2);border-color:rgba(139,92,246,0.5);color:#c4b5fd;box-shadow:0 0 12px rgba(139,92,246,0.25);" onmouseover="this.style.boxShadow='0 0 20px rgba(139,92,246,0.5)';this.style.borderColor='rgba(167,139,250,0.8)';this.style.color='#ede9fe'" onmouseout="this.style.boxShadow='0 0 12px rgba(139,92,246,0.25)';this.style.borderColor='rgba(139,92,246,0.5)';this.style.color='#c4b5fd'">
        <i data-lucide="user" class="w-4 h-4" style="color:#a78bfa"></i>
        <span>Kullan&#x131;c&#x131; Giri&#x15F;i</span>
       </button>
@@ -703,6 +704,25 @@
     </div>
    </nav>
   </div>
+
+  <!-- SUPABASE AUTH MODAL -->
+  <div id="sb-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%);border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:32px 36px;width:340px;box-shadow:0 24px 64px rgba(0,0,0,0.9),0 0 40px rgba(109,40,217,0.2)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#8b5cf6;box-shadow:0 0 10px rgba(139,92,246,0.8)"></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;color:#c4b5fd;letter-spacing:0.08em">GOOGLE G&#x130;R&#x130;&#x15E;</span>
+        <button onclick="sbHideModal()" style="margin-left:auto;background:none;border:none;color:#475569;cursor:pointer;font-size:18px;line-height:1;padding:0" onmouseover="this.style.color='#94a3b8'" onmouseout="this.style.color='#475569'">&#x2715;</button>
+      </div>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#64748b;text-align:center;margin-bottom:20px;line-height:1.6">Google hesab&#x131;n&#x131;zla giri&#x15F; yap&#x131;n.<br><span style="color:#475569;font-size:0.68rem">Admin d&#x131;&#x15F;&#x131;ndaki hesaplar salt okunurdur.</span></p>
+      <button onclick="sbGoogleSignIn()"
+        style="width:100%;padding:12px;border-radius:9px;border:1px solid rgba(255,255,255,0.15);background:#fff;color:#1f1f1f;font-family:'Space Grotesk',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:box-shadow 0.2s"
+        onmouseover="this.style.boxShadow='0 0 20px rgba(255,255,255,0.15)'" onmouseout="this.style.boxShadow='none'">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Google ile Giri&#x15F; Yap
+      </button>
+    </div>
+  </div>
+
   <script>
   // State
   const state = {
@@ -1397,6 +1417,7 @@
 
   function kasaSave() {
     localStorage.setItem('kasa-data', JSON.stringify(kasaGetData()));
+    kasaSaveSupabase();
     const btn = document.querySelector('#kasa-header-actions button');
     const orig = btn.style.boxShadow;
     btn.style.boxShadow = '0 0 24px rgba(34,211,238,0.8)';
@@ -2067,6 +2088,7 @@
 
   function hsSave() {
     localStorage.setItem('hs-data', JSON.stringify(hsGetData()));
+    hsSaveSupabase();
     const btn = document.getElementById('hs-save-btn');
     const orig = btn.style.boxShadow;
     btn.style.boxShadow = '0 0 24px rgba(34,211,238,0.8)';
@@ -2329,6 +2351,7 @@
     const last = paramlaHistory[paramlaHistory.length - 1];
     if (!last || (now - last.ts) >= 60000 || Math.abs(last.value - value) > 0.01) {
       paramlaHistory.push({ ts: now, value });
+      paramlaSnapshotSupabase(value);
     }
     const keepAfter = now - (1000 * 60 * 60 * 24 * 550);
     paramlaHistory = paramlaHistory.filter(p => p.ts >= keepAfter);
@@ -3908,6 +3931,7 @@
   }
   function ortSave() {
     localStorage.setItem('ort-data', JSON.stringify(ortGetData()));
+    ortSaveSupabase();
     const btn=document.getElementById('ort-save-btn');
     const orig=btn.style.boxShadow; btn.style.boxShadow='0 0 24px rgba(34,211,238,0.8)';
     setTimeout(()=>btn.style.boxShadow=orig, 800);
@@ -4280,6 +4304,251 @@
     btn.style.opacity = meta.hidden ? '0.3' : '1';
     ortChartInstance.update();
   }
+
+  // ── SUPABASE ──────────────────────────────────────────────────
+  (function() {
+    if (!window.supabase) { console.warn('Supabase CDN yüklenemedi'); return; }
+    const { createClient: _sbCreate } = window.supabase;
+    const SUPABASE_URL = 'https://bmzkeqetdyhpcxpbzrdn.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_oq6K898Z4n5RXaaa-oXAXg__uqFqrNi';
+    window.sbClient = _sbCreate(SUPABASE_URL, SUPABASE_ANON);
+  })();
+
+  let sbUser = null;
+
+  function sbParseDate(s) {
+    if (!s) return null;
+    const t = String(s).trim();
+    if (!t) return null;
+    const m = t.match(/^(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{4})$/);
+    if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+    return null;
+  }
+
+  function sbParseNum(s) {
+    if (s === null || s === undefined || s === '') return 0;
+    const n = parseFloat(String(s).replace(/[^\d.,\-]/g,'').replace(',','.'));
+    return isNaN(n) ? 0 : n;
+  }
+
+  const SB_ADMIN_EMAIL = 'fatihgural80@gmail.com';
+
+  function sbIsAdmin() {
+    return !!(sbUser && sbUser.email === SB_ADMIN_EMAIL);
+  }
+
+  function sbUpdateAuthUI() {
+    const btn = document.getElementById('sb-auth-btn');
+    if (!btn) return;
+    const span = btn.querySelector('span');
+    const icon = btn.querySelector('i');
+    if (sbUser) {
+      const name = (sbUser.email || '').split('@')[0];
+      if (span) span.textContent = sbIsAdmin() ? name : name + ' (Salt Okunur)';
+      if (icon) icon.setAttribute('data-lucide', 'log-out');
+      btn.style.color = sbIsAdmin() ? '#22d3ee' : '#fb923c';
+      btn.style.borderColor = sbIsAdmin() ? 'rgba(34,211,238,0.5)' : 'rgba(251,146,60,0.5)';
+    } else {
+      if (span) span.textContent = 'Kullan\u0131c\u0131 Giri\u015Fi';
+      if (icon) icon.setAttribute('data-lucide', 'user');
+      btn.style.color = '#c4b5fd';
+      btn.style.borderColor = 'rgba(139,92,246,0.5)';
+    }
+    lucide.createIcons();
+  }
+
+  function sbShowModal() {
+    document.getElementById('sb-modal').style.display = 'flex';
+  }
+
+  function sbHideModal() {
+    document.getElementById('sb-modal').style.display = 'none';
+  }
+
+  function sbAuthBtnClick() {
+    if (sbUser) {
+      if (confirm('\u00c7\u0131k\u0131\u015f yapmak istiyor musunuz?')) sbSignOut();
+    } else {
+      sbShowModal();
+    }
+  }
+
+  async function sbGoogleSignIn() {
+    if (!window.sbClient) { alert('Supabase ba\u011flant\u0131s\u0131 kurulamad\u0131.'); return; }
+    sbHideModal();
+    const { error } = await window.sbClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href.split('?')[0].split('#')[0] }
+    });
+    if (error) alert('Google giri\u015fi ba\u015flat\u0131lamad\u0131: ' + error.message);
+  }
+
+  async function sbSignOut() {
+    if (window.sbClient) await window.sbClient.auth.signOut();
+    sbUser = null;
+    sbUpdateAuthUI();
+  }
+
+  async function sbLoadAll() {
+    await Promise.all([hsLoadSupabase(), kasaLoadSupabase(), ortLoadSupabase()]);
+    paramlaScheduleRefresh();
+  }
+
+  // ── HS Supabase ──────────────────────────────────────────────
+  async function hsSaveSupabase() {
+    if (!sbUser || !window.sbClient || !sbIsAdmin()) return;
+    try {
+      const rows = [];
+      document.querySelectorAll('#hs-tbody .hs-row').forEach(row => {
+        const cells = [...row.querySelectorAll('.hs-td')].map(td => td.textContent.trim());
+        if (!cells[1]) return;
+        rows.push({
+          user_id: sbUser.id,
+          buy_date: sbParseDate(cells[0]),
+          symbol: cells[1],
+          buy_price: sbParseNum(cells[2]),
+          quantity: sbParseNum(cells[3]),
+          sell_date: sbParseDate(cells[5]) || null,
+          sell_price: cells[6] ? (sbParseNum(cells[6]) || null) : null,
+        });
+      });
+      await window.sbClient.from('hs_transactions').delete().eq('user_id', sbUser.id);
+      if (rows.length) await window.sbClient.from('hs_transactions').insert(rows);
+    } catch(e) { console.warn('HS Supabase save:', e.message); }
+  }
+
+  async function hsLoadSupabase() {
+    if (!sbUser || !window.sbClient) return;
+    try {
+      const { data, error } = await window.sbClient.from('hs_transactions')
+        .select('*').order('buy_date', { ascending: true });
+      if (error || !data || !data.length) return;
+      const tbody = document.getElementById('hs-tbody');
+      tbody.innerHTML = ''; hsRowCount = 0;
+      data.forEach(d => {
+        const row = hsCreateRow();
+        const cells = row.querySelectorAll('.hs-td');
+        const set = (i, v) => { if (!hsIsComputedCol(i) && v != null) cells[i].textContent = v; };
+        set(0, d.buy_date || '');
+        set(1, d.symbol || '');
+        set(2, d.buy_price != null ? d.buy_price : '');
+        set(3, d.quantity != null ? d.quantity : '');
+        set(5, d.sell_date || '');
+        set(6, d.sell_price != null ? d.sell_price : '');
+        tbody.appendChild(row);
+      });
+      hsRenumberRows(); hsRecalcAll();
+      localStorage.setItem('hs-data', JSON.stringify(hsGetData()));
+    } catch(e) { console.warn('HS Supabase load:', e.message); }
+  }
+
+  // ── KASA Supabase ─────────────────────────────────────────────
+  async function kasaSaveSupabase() {
+    if (!sbUser || !window.sbClient || !sbIsAdmin()) return;
+    try {
+      const rows = [];
+      document.querySelectorAll('#kasa-tbody .kasa-row').forEach(row => {
+        const cells = [...row.querySelectorAll('.kasa-td')].map(td => td.textContent.trim());
+        rows.push({
+          user_id: sbUser.id,
+          entry_date: sbParseDate(cells[0]),
+          amount: sbParseNum(cells[1]),
+          action: cells[2] || '',
+          person: cells[3] || '',
+          note: cells[4] || '',
+        });
+      });
+      await window.sbClient.from('kasa_entries').delete().eq('user_id', sbUser.id);
+      if (rows.length) await window.sbClient.from('kasa_entries').insert(rows);
+    } catch(e) { console.warn('KASA Supabase save:', e.message); }
+  }
+
+  async function kasaLoadSupabase() {
+    if (!sbUser || !window.sbClient) return;
+    try {
+      const { data, error } = await window.sbClient.from('kasa_entries')
+        .select('*').order('entry_date', { ascending: true });
+      if (error || !data || !data.length) return;
+      const tbody = document.getElementById('kasa-tbody');
+      tbody.innerHTML = ''; kasaRowCount = 0;
+      data.forEach(d => {
+        const row = kasaCreateRow();
+        const cells = row.querySelectorAll('.kasa-td');
+        if (cells[0]) cells[0].textContent = d.entry_date || '';
+        if (cells[1]) cells[1].textContent = d.amount != null ? d.amount : '';
+        if (cells[2]) cells[2].textContent = d.action || '';
+        if (cells[3]) cells[3].textContent = d.person || '';
+        if (cells[4]) cells[4].textContent = d.note || '';
+        tbody.appendChild(row);
+      });
+      kasaRenumberRows();
+      localStorage.setItem('kasa-data', JSON.stringify(kasaGetData()));
+    } catch(e) { console.warn('KASA Supabase load:', e.message); }
+  }
+
+  // ── ORTAKLIK Supabase ─────────────────────────────────────────
+  async function ortSaveSupabase() {
+    if (!sbUser || !window.sbClient || !sbIsAdmin()) return;
+    try {
+      const { columns, rows } = ortGetData();
+      const records = rows.map(cells => ({
+        user_id: sbUser.id,
+        row_date: sbParseDate(cells[0]) || null,
+        columns_json: { columns, cells },
+      }));
+      await window.sbClient.from('ortaklik_rows').delete().eq('user_id', sbUser.id);
+      if (records.length) await window.sbClient.from('ortaklik_rows').insert(records);
+    } catch(e) { console.warn('ORT Supabase save:', e.message); }
+  }
+
+  async function ortLoadSupabase() {
+    if (!sbUser || !window.sbClient) return;
+    try {
+      const { data, error } = await window.sbClient.from('ortaklik_rows')
+        .select('*').order('created_at', { ascending: true });
+      if (error || !data || !data.length) return;
+      const firstCols = data[0].columns_json?.columns;
+      if (firstCols && firstCols.length) { ortColumns = firstCols; ortRebuildHeader(); }
+      const tbody = document.getElementById('ort-tbody');
+      tbody.innerHTML = ''; ortRowCount = 0;
+      data.forEach(d => {
+        const cells = d.columns_json?.cells || [];
+        const row = ortCreateRow();
+        row.querySelectorAll('.ort-td').forEach((td, i) => { if (cells[i] !== undefined) td.textContent = cells[i]; });
+        tbody.appendChild(row);
+      });
+      ortRenumberRows(); ortRecalcFinancials();
+      localStorage.setItem('ort-data', JSON.stringify(ortGetData()));
+    } catch(e) { console.warn('ORT Supabase load:', e.message); }
+  }
+
+  // ── Paramla Snapshot Supabase ─────────────────────────────────
+  async function paramlaSnapshotSupabase(total) {
+    if (!sbUser || !window.sbClient || !sbIsAdmin()) return;
+    try {
+      await window.sbClient.from('portfolio_snapshots').insert([{
+        user_id: sbUser.id,
+        snapshot_time: new Date().toISOString(),
+        total_value: total,
+      }]);
+    } catch(e) { console.warn('Paramla snapshot:', e.message); }
+  }
+
+  // ── Auth init ─────────────────────────────────────────────────
+  (async function sbInit() {
+    if (!window.sbClient) return;
+    try {
+      const { data } = await window.sbClient.auth.getSession();
+      sbUser = data.session?.user || null;
+      sbUpdateAuthUI();
+      if (sbUser) await sbLoadAll();
+      window.sbClient.auth.onAuthStateChange((_ev, session) => {
+        sbUser = session?.user || null;
+        sbUpdateAuthUI();
+      });
+    } catch(e) { console.warn('Supabase init:', e.message); }
+  })();
 
   lucide.createIcons();
 
