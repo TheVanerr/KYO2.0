@@ -4637,7 +4637,7 @@
           sell_price: cells[6] ? (sbParseNum(cells[6]) || null) : null,
         });
       });
-      await window.sbClient.from('hs_transactions').delete().eq('user_id', sbUser.id);
+      await window.sbClient.from('hs_transactions').delete().not('id', 'is', null);
       if (rows.length) await window.sbClient.from('hs_transactions').insert(rows);
     } catch(e) { console.warn('HS Supabase save:', e.message); }
   }
@@ -4683,7 +4683,7 @@
           note: cells[4] || '',
         });
       });
-      await window.sbClient.from('kasa_entries').delete().eq('user_id', sbUser.id);
+      await window.sbClient.from('kasa_entries').delete().not('id', 'is', null);
       if (rows.length) await window.sbClient.from('kasa_entries').insert(rows);
     } catch(e) {
       console.warn('KASA Supabase save:', e.message);
@@ -4725,7 +4725,7 @@
         row_date: sbParseDate(cells[0]) || null,
         columns_json: { columns, cells },
       }));
-      await window.sbClient.from('ortaklik_rows').delete().eq('user_id', sbUser.id);
+      await window.sbClient.from('ortaklik_rows').delete().not('id', 'is', null);
       if (records.length) await window.sbClient.from('ortaklik_rows').insert(records);
     } catch(e) { console.warn('ORT Supabase save:', e.message); }
   }
