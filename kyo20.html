@@ -1070,7 +1070,13 @@
       const td = document.createElement('td');
       td.dataset.row = r;
       td.dataset.col = c;
-      td.className = 'kasa-td px-3 py-2 text-sm text-slate-300 mono text-center';
+      if (c === 4) {
+        td.className = 'kasa-td px-3 py-2 text-sm mono text-center';
+        td.style.color = '#34d399';
+        td.title = 'Otomatik hesaplanır';
+      } else {
+        td.className = 'kasa-td px-3 py-2 text-sm text-slate-300 mono text-center';
+      }
       td.style.height = '36px';
       td.style.overflow = 'hidden';
       row.appendChild(td);
@@ -1099,6 +1105,36 @@
       const numTd = row.querySelector('.kasa-row-num');
       if (numTd) numTd.textContent = i + 1;
     });
+  }
+
+  function kasaFmtBalance(n) {
+    if (!isFinite(n)) return '';
+    return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Excel makrosu: F[i] = C[i] + F[i-1] (col-1=TUTAR girdi, col-4=kümülatif bakiye)
+  function kasaRecalcBalance(fromIdx) {
+    const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
+    if (!fromIdx || fromIdx < 0) fromIdx = 0;
+    let prevBalance = 0;
+    if (fromIdx > 0) {
+      const prevCells = allRows[fromIdx - 1].querySelectorAll('.kasa-td');
+      const prevText = prevCells[4] ? prevCells[4].textContent.trim() : '';
+      if (prevText) prevBalance = sbParseNum(prevText);
+    }
+    for (let i = fromIdx; i < allRows.length; i++) {
+      const cells = allRows[i].querySelectorAll('.kasa-td');
+      const col1 = cells[1]; const col4 = cells[4];
+      if (!col1 || !col4) continue;
+      const val = col1.textContent.trim();
+      if (!val) {
+        col4.textContent = '';
+        prevBalance = 0;
+      } else {
+        prevBalance = sbParseNum(val) + prevBalance;
+        col4.textContent = kasaFmtBalance(prevBalance);
+      }
+    }
   }
 
   function kasaHighlight() {
@@ -1151,6 +1187,7 @@
 
   function kasaEnterEdit(td, clear) {
     if (!td) return;
+    if (+td.dataset.col === 4) return; // hesaplanan sütun, düzenlenemez
     if (kEditCell === td) return;
     kasaExitEdit();
     kEditCell = td;
@@ -1169,9 +1206,15 @@
 
   function kasaExitEdit() {
     if (!kEditCell) return;
+    const _editedCol = parseInt(kEditCell.dataset.col);
+    const _editedTr  = kEditCell.closest('tr');
     kEditCell.contentEditable = 'false';
     kEditCell.classList.remove('kasa-editing');
     kEditCell = null;
+    if (_editedCol === 1 && _editedTr) {
+      const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
+      kasaRecalcBalance(allRows.indexOf(_editedTr));
+    }
   }
 
   function kasaMoveSel(dr, dc, extend) {
@@ -1193,7 +1236,12 @@
     if (!kSel) return;
     const r1 = Math.min(kSel.r, (kSelEnd||kSel).r), r2 = Math.max(kSel.r, (kSelEnd||kSel).r);
     const c1 = Math.min(kSel.c, (kSelEnd||kSel).c), c2 = Math.max(kSel.c, (kSelEnd||kSel).c);
-    for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) { const t=kasaCell(r,c); if(t) t.textContent=''; }
+    for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) { const t=kasaCell(r,c); if(t&&c!==4) t.textContent=''; }
+    if (c1 <= 1 && c2 >= 1) {
+      const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
+      const firstTd = kasaCell(r1, 0);
+      kasaRecalcBalance(firstTd ? allRows.indexOf(firstTd.closest('tr')) : 0);
+    }
   }
 
   function kasaCopy(cut) {
@@ -1221,9 +1269,12 @@
     while (kasaRowCount<sr+data.length) kasaAddRow();
     for (let dr=0;dr<data.length;dr++)
       for (let dc=0;dc<data[dr].length;dc++) {
-        const t=kasaCell(sr+dr,sc+dc); if(t) t.textContent=data[dr][dc];
+        const t=kasaCell(sr+dr,sc+dc); if(t&&(sc+dc)!==4) t.textContent=data[dr][dc];
       }
     if (cut) { kCutCells.forEach(t=>{t.textContent='';t.classList.remove('kasa-cut');}); kCutCells=[]; kClip=null; }
+    const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
+    const pasteTd = kasaCell(sr, 0);
+    kasaRecalcBalance(pasteTd ? allRows.indexOf(pasteTd.closest('tr')) : 0);
   }
 
   const kasaGrid = document.getElementById('kasa-grid');
@@ -1338,6 +1389,7 @@
     kSel = null; kSelEnd = null; kRowSelMode = false;
     kasaHighlight();
     kasaRenumberRows();
+    kasaRecalcBalance(0);
   }
 
   function kasaCtxInsertAbove() {
@@ -1346,9 +1398,12 @@
     const r1 = kSel ? Math.min(kSel.r, (kSelEnd||kSel).r) : kCtxTargetRow;
     const refTd = kasaCell(r1, 0);
     if (!refTd) return;
-    document.getElementById('kasa-tbody').insertBefore(kasaCreateRow(), refTd.closest('tr'));
+    const newTr = kasaCreateRow();
+    document.getElementById('kasa-tbody').insertBefore(newTr, refTd.closest('tr'));
     kasaRenumberRows();
     kSel = null; kSelEnd = null; kRowSelMode = false; kasaHighlight();
+    const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
+    kasaRecalcBalance(allRows.indexOf(newTr));
   }
 
   function kasaCtxInsertBelow() {
@@ -1357,9 +1412,12 @@
     const r2 = kSel ? Math.max(kSel.r, (kSelEnd||kSel).r) : kCtxTargetRow;
     const refTd = kasaCell(r2, 0);
     if (!refTd) return;
-    document.getElementById('kasa-tbody').insertBefore(kasaCreateRow(), refTd.closest('tr').nextSibling);
+    const newTr = kasaCreateRow();
+    document.getElementById('kasa-tbody').insertBefore(newTr, refTd.closest('tr').nextSibling);
     kasaRenumberRows();
     kSel = null; kSelEnd = null; kRowSelMode = false; kasaHighlight();
+    const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
+    kasaRecalcBalance(allRows.indexOf(newTr));
   }
 
   function kasaCtxDeleteRows() {
@@ -1449,10 +1507,11 @@
       dataLines.forEach(line => {
         const cols = line.split(',').map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"'));
         const row = kasaCreateRow();
-        row.querySelectorAll('.kasa-td').forEach((td, i) => { if (cols[i] !== undefined) td.textContent = cols[i]; });
+        row.querySelectorAll('.kasa-td').forEach((td, i) => { if (i !== 4 && cols[i] !== undefined) td.textContent = cols[i]; });
         tbody.appendChild(row);
       });
       kasaRenumberRows();
+      kasaRecalcBalance(0);
       kSel = null; kSelEnd = null; kRowSelMode = false; kasaHighlight();
     };
     reader.readAsText(file, 'utf-8');
@@ -1470,10 +1529,11 @@
       kasaRowCount = 0;
       rows.forEach(cols => {
         const row = kasaCreateRow();
-        row.querySelectorAll('.kasa-td').forEach((td, i) => { if (cols[i] !== undefined) td.textContent = cols[i]; });
+        row.querySelectorAll('.kasa-td').forEach((td, i) => { if (i !== 4 && cols[i] !== undefined) td.textContent = cols[i]; });
         tbody.appendChild(row);
       });
       kasaRenumberRows();
+      kasaRecalcBalance(0);
     } catch(e) {}
   })();
 
@@ -4423,10 +4483,14 @@
     return isNaN(n) ? 0 : n;
   }
 
-  const SB_ADMIN_EMAIL = 'fatihgural80@gmail.com';
+  const SB_ADMIN_EMAILS = [
+    'fatihgural80@gmail.com',
+    'merickayali3@gmail.com',
+    'kurgusalyo@gmail.com',
+  ];
 
   function sbIsAdmin() {
-    return !!(sbUser && sbUser.email === SB_ADMIN_EMAIL);
+    return !!(sbUser && SB_ADMIN_EMAILS.includes(sbUser.email));
   }
 
   function sbUpdateAuthUI() {
@@ -4570,10 +4634,11 @@
         if (cells[1]) cells[1].textContent = d.amount != null ? d.amount : '';
         if (cells[2]) cells[2].textContent = d.action || '';
         if (cells[3]) cells[3].textContent = d.person || '';
-        if (cells[4]) cells[4].textContent = d.note || '';
+        // cells[4] = kümülatif bakiye, aşağıda hesaplanır
         tbody.appendChild(row);
       });
       kasaRenumberRows();
+      kasaRecalcBalance(0);
       localStorage.setItem('kasa-data', JSON.stringify(kasaGetData()));
     } catch(e) { console.warn('KASA Supabase load:', e.message); }
   }
