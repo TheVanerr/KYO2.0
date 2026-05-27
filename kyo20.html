@@ -379,6 +379,18 @@
        </label>
 
       </div>
+      <div id="perf-header-actions" class="flex items-center gap-2" style="display:none">
+       <button onclick="perfSave()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#22d3ee;border-color:rgba(34,211,238,0.4);background:rgba(34,211,238,0.07);box-shadow:0 0 10px rgba(34,211,238,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(34,211,238,0.45)';this.style.borderColor='rgba(34,211,238,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(34,211,238,0.15)';this.style.borderColor='rgba(34,211,238,0.4)'">
+        <i data-lucide="save" class="w-3.5 h-3.5"></i><span>Kaydet</span>
+       </button>
+       <button onclick="perfExport()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#fb923c;border-color:rgba(251,146,60,0.4);background:rgba(251,146,60,0.07);box-shadow:0 0 10px rgba(251,146,60,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(251,146,60,0.45)';this.style.borderColor='rgba(251,146,60,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(251,146,60,0.15)';this.style.borderColor='rgba(251,146,60,0.4)'">
+        <i data-lucide="upload" class="w-3.5 h-3.5"></i><span>D&#x131;&#x15F;ar&#x131; Aktar</span>
+       </button>
+       <label class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all cursor-pointer" style="color:#f472b6;border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.07);box-shadow:0 0 10px rgba(244,114,182,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(244,114,182,0.45)';this.style.borderColor='rgba(244,114,182,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(244,114,182,0.15)';this.style.borderColor='rgba(244,114,182,0.4)'">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i><span>&#x130;&#xe7;eri Aktar</span>
+        <input id="perf-import-input" type="file" accept=".csv,.json" class="hidden" onchange="perfImport(this)">
+       </label>
+      </div>
   <div id="hs-header-actions" class="flex items-center gap-2" style="display:none">
    <button id="hs-save-btn" onclick="hsSave()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#22d3ee;border-color:rgba(34,211,238,0.4);background:rgba(34,211,238,0.07);box-shadow:0 0 10px rgba(34,211,238,0.15);" onmouseover="this.style.boxShadow='0 0 18px rgba(34,211,238,0.45)';this.style.borderColor='rgba(34,211,238,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(34,211,238,0.15)';this.style.borderColor='rgba(34,211,238,0.4)'">
     <i data-lucide="save" class="w-3.5 h-3.5"></i><span>Kaydet</span>
@@ -692,6 +704,43 @@
         </div>
       </div>
     </section>
+    <!-- PERFORMANS PAGE -->
+    <section id="page-performans" class="page flex-col gap-6 w-full">
+     <div id="perf-grid" tabindex="0" class="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden" style="outline:none">
+      <div class="overflow-x-auto" style="position:relative">
+       <div id="perf-sel-overlay"></div>
+       <table id="perf-table" class="w-full" style="table-layout:fixed">
+        <colgroup>
+         <col style="width:4%">
+         <col style="width:14%">
+         <col style="width:18%">
+         <col style="width:16%">
+         <col style="width:16%">
+         <col style="width:16%">
+         <col style="width:16%">
+        </colgroup>
+        <thead>
+         <tr class="bg-slate-800/40">
+          <th class="px-2 py-3 text-center text-xs font-semibold mono" style="color:#334155;border-right:1px solid rgba(71,85,105,0.5)">#</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TARİH</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">HİSSE DEĞERİ</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">GÜNLÜK</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">HAFTALIK</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">AYLIK</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">YILLIK</th>
+         </tr>
+        </thead>
+        <tbody id="perf-tbody">
+        </tbody>
+       </table>
+      </div>
+     </div>
+     <button onclick="perfAddRows()" class="mt-2 w-full flex items-center justify-center gap-3 px-4 py-2 rounded-lg text-xs font-semibold mono transition" style="color:#a78bfa;border:1px dashed rgba(139,92,246,0.4);background:transparent;" onmouseover="this.style.background='rgba(91,33,182,0.15)';this.style.borderColor='rgba(167,139,250,0.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(139,92,246,0.4)'">
+      <i data-lucide="plus" class="w-3.5 h-3.5 flex-shrink-0"></i>
+      <span>Satır Ekle</span>
+      <input id="perf-row-count" type="number" min="1" value="1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.stopPropagation();perfAddRows();}" class="w-12 px-1 py-0.5 rounded text-xs font-semibold mono text-center bg-transparent border" style="color:#a78bfa;border:1px solid rgba(139,92,246,0.5);outline:none;" />
+     </button>
+    </section>
    </main><!-- Bottom-Left Navigation -->
    <nav class="fixed bottom-4 left-4 z-50">
     <div class="bg-slate-900/90 backdrop-blur-md border border-slate-700/60 rounded-xl p-1.5 shadow-2xl shadow-black/50 flex gap-1">
@@ -701,6 +750,7 @@
      <button data-page="hisse" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="trending-up" class="w-4 h-4"></i><span>HİSSE</span></button>
     <button data-page="uyari" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="siren" class="w-4 h-4"></i><span>UYARI</span></button>
      <button data-page="ortaklik" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="users" class="w-4 h-4"></i><span>ORTAKLIK</span></button>
+     <button data-page="performans" class="nav-btn px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-400 flex items-center justify-center gap-2"><i data-lucide="bar-chart" class="w-4 h-4"></i><span>PERFORMANS</span></button>
     </div>
    </nav>
   </div>
@@ -1034,6 +1084,7 @@
       document.getElementById('ort-view-toggle-wrap').style.display = target === 'ortaklik' ? 'block' : 'none';
       document.getElementById('hs-view-toggle-wrap').style.display = target === 'hs' ? 'block' : 'none';
       document.getElementById('hisse-header-actions').style.display = target === 'hisse' ? 'flex' : 'none';
+      document.getElementById('perf-header-actions').style.display = target === 'performans' ? 'flex' : 'none';
       if (target === 'hisse') hisseOnActivate();
       if (target === 'uyari') uyariOnActivate();
       if (target === 'hs') hsSetView(false);
@@ -4634,7 +4685,10 @@
       });
       await window.sbClient.from('kasa_entries').delete().eq('user_id', sbUser.id);
       if (rows.length) await window.sbClient.from('kasa_entries').insert(rows);
-    } catch(e) { console.warn('KASA Supabase save:', e.message); }
+    } catch(e) {
+      console.warn('KASA Supabase save:', e.message);
+      alert('Supabase kaydetme hatası: ' + e.message + '\n\nSupabase Dashboard → Table Editor → kasa_entries → RLS Policies sayfasını kontrol edin.');
+    }
   }
 
   async function kasaLoadSupabase() {
@@ -4708,6 +4762,362 @@
       }]);
     } catch(e) { console.warn('Paramla snapshot:', e.message); }
   }
+
+  // ── PERFORMANS Spreadsheet ─────────────────────────────────────
+  const PERF_COLS = 6;
+  let perfRowCount = 0;
+  let pSel = null, pSelEnd = null, pEditCell = null;
+  let pClip = null, pCutCells = [];
+  let pRowSelMode = false;
+  let pCtxTargetRow = null;
+  let pDragging = false;
+
+  function perfCell(r, c) {
+    return document.querySelector(`#perf-tbody td[data-row="${r}"][data-col="${c}"]`);
+  }
+
+  function perfCreateRow() {
+    const r = perfRowCount++;
+    const row = document.createElement('tr');
+    row.className = 'kasa-row';
+    const numTd = document.createElement('td');
+    numTd.className = 'kasa-row-num';
+    numTd.textContent = '–';
+    row.appendChild(numTd);
+    for (let c = 0; c < PERF_COLS; c++) {
+      const td = document.createElement('td');
+      td.dataset.row = r;
+      td.dataset.col = c;
+      td.className = 'kasa-td px-3 py-2 text-sm text-slate-300 mono text-center';
+      td.style.height = '36px';
+      td.style.overflow = 'hidden';
+      row.appendChild(td);
+    }
+    return row;
+  }
+
+  function perfAddRow() {
+    document.getElementById('perf-tbody').appendChild(perfCreateRow());
+    perfRenumber();
+  }
+  for (let i = 0; i < 15; i++) perfAddRow();
+
+  function perfAddRows() {
+    const n = Math.max(1, parseInt(document.getElementById('perf-row-count').value) || 1);
+    for (let i = 0; i < n; i++) document.getElementById('perf-tbody').appendChild(perfCreateRow());
+    perfRenumber();
+    lucide.createIcons();
+  }
+
+  function perfRenumber() {
+    document.querySelectorAll('#perf-tbody .kasa-row').forEach((row, i) => {
+      const n = row.querySelector('.kasa-row-num');
+      if (n) n.textContent = i + 1;
+    });
+  }
+
+  function perfHighlight() {
+    document.querySelectorAll('#perf-tbody .kasa-td').forEach(td => td.classList.remove('kasa-anchor', 'kasa-range'));
+    document.querySelectorAll('#perf-tbody .kasa-row-num').forEach(td => td.classList.remove('kasa-row-selected'));
+    if (!pSel) { perfUpdateOverlay(); return; }
+    const r1 = Math.min(pSel.r, (pSelEnd||pSel).r), r2 = Math.max(pSel.r, (pSelEnd||pSel).r);
+    const c1 = Math.min(pSel.c, (pSelEnd||pSel).c), c2 = Math.max(pSel.c, (pSelEnd||pSel).c);
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
+        const td = perfCell(r, c);
+        if (!td) continue;
+        td.classList.add(r === pSel.r && c === pSel.c ? 'kasa-anchor' : 'kasa-range');
+      }
+      if (pRowSelMode) {
+        const fd = perfCell(r, 0);
+        if (fd) { const n = fd.closest('tr').querySelector('.kasa-row-num'); if (n) n.classList.add('kasa-row-selected'); }
+      }
+    }
+    perfUpdateOverlay();
+  }
+
+  function perfUpdateOverlay() {
+    const overlay = document.getElementById('perf-sel-overlay');
+    if (!overlay || !pSel) { if (overlay) overlay.style.display = 'none'; return; }
+    const r1 = Math.min(pSel.r, (pSelEnd||pSel).r), r2 = Math.max(pSel.r, (pSelEnd||pSel).r);
+    const c1 = Math.min(pSel.c, (pSelEnd||pSel).c), c2 = Math.max(pSel.c, (pSelEnd||pSel).c);
+    const tl = perfCell(r1, c1), br = perfCell(r2, c2);
+    if (!tl || !br) { overlay.style.display = 'none'; return; }
+    const container = overlay.parentElement;
+    const cR = container.getBoundingClientRect();
+    const tlR = tl.getBoundingClientRect(), brR = br.getBoundingClientRect();
+    overlay.style.display = 'block';
+    overlay.style.left   = (tlR.left - cR.left + container.scrollLeft) + 'px';
+    overlay.style.top    = (tlR.top  - cR.top  + container.scrollTop)  + 'px';
+    overlay.style.width  = (brR.right  - tlR.left) + 'px';
+    overlay.style.height = (brR.bottom - tlR.top)  + 'px';
+  }
+
+  function perfEnterEdit(td, clear) {
+    if (!td) return;
+    if (pEditCell === td) return;
+    perfExitEdit();
+    pEditCell = td;
+    td.contentEditable = 'true';
+    td.classList.add('kasa-editing');
+    if (clear) td.textContent = '';
+    td.focus();
+    if (!clear) {
+      const rng = document.createRange();
+      rng.selectNodeContents(td);
+      rng.collapse(false);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(rng);
+    }
+  }
+
+  function perfExitEdit() {
+    if (!pEditCell) return;
+    pEditCell.contentEditable = 'false';
+    pEditCell.classList.remove('kasa-editing');
+    pEditCell = null;
+  }
+
+  function perfMoveSel(dr, dc, extend) {
+    if (!pSel) return;
+    const ref = extend ? (pSelEnd||pSel) : pSel;
+    let nr = Math.max(0, ref.r + dr);
+    let nc = Math.max(0, Math.min(PERF_COLS - 1, ref.c + dc));
+    while (nr >= perfRowCount) perfAddRow();
+    if (extend) { pSelEnd = { r: nr, c: nc }; }
+    else { pSel = { r: nr, c: nc }; pSelEnd = null; }
+    perfHighlight();
+  }
+
+  function perfClearSel() {
+    if (!pSel) return;
+    const r1=Math.min(pSel.r,(pSelEnd||pSel).r), r2=Math.max(pSel.r,(pSelEnd||pSel).r);
+    const c1=Math.min(pSel.c,(pSelEnd||pSel).c), c2=Math.max(pSel.c,(pSelEnd||pSel).c);
+    for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) { const t=perfCell(r,c); if(t) t.textContent=''; }
+  }
+
+  function perfCopy(cut) {
+    if (!pSel) return;
+    const r1=Math.min(pSel.r,(pSelEnd||pSel).r), r2=Math.max(pSel.r,(pSelEnd||pSel).r);
+    const c1=Math.min(pSel.c,(pSelEnd||pSel).c), c2=Math.max(pSel.c,(pSelEnd||pSel).c);
+    const data=[];
+    for (let r=r1;r<=r2;r++) {
+      const row=[]; for (let c=c1;c<=c2;c++) { const t=perfCell(r,c); row.push(t?t.textContent:''); }
+      data.push(row);
+    }
+    pCutCells.forEach(t=>t.classList.remove('kasa-cut')); pCutCells=[];
+    pClip={data,cut};
+    if (cut) {
+      for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) {
+        const t=perfCell(r,c); if(t){t.classList.add('kasa-cut');pCutCells.push(t);}
+      }
+    }
+  }
+
+  function perfPaste() {
+    if (!pClip||!pSel) return;
+    const {data,cut}=pClip; const sr=pSel.r, sc=pSel.c;
+    while (perfRowCount<sr+data.length) perfAddRow();
+    for (let dr=0;dr<data.length;dr++)
+      for (let dc=0;dc<data[dr].length;dc++) {
+        const t=perfCell(sr+dr,sc+dc); if(t) t.textContent=data[dr][dc];
+      }
+    if (cut) { pCutCells.forEach(t=>{t.textContent='';t.classList.remove('kasa-cut');}); pCutCells=[]; pClip=null; }
+  }
+
+  function perfDeleteSelectedRows() {
+    if (!pSel) return;
+    const r1=Math.min(pSel.r,(pSelEnd||pSel).r), r2=Math.max(pSel.r,(pSelEnd||pSel).r);
+    for (let r=r1;r<=r2;r++) { const td=perfCell(r,0); if(td) td.closest('tr').remove(); }
+    pSel=null; pSelEnd=null; pRowSelMode=false; perfHighlight(); perfRenumber();
+  }
+
+  const perfGrid = document.getElementById('perf-grid');
+
+  perfGrid.addEventListener('mousedown', e => {
+    const numTd = e.target.closest('#perf-tbody .kasa-row-num');
+    if (numTd) {
+      if (pEditCell) perfExitEdit();
+      const tr = numTd.closest('tr');
+      const fd = tr.querySelector('.kasa-td');
+      if (!fd) return;
+      const r = +fd.dataset.row;
+      if (e.shiftKey && pSel && pRowSelMode) { pSelEnd={r,c:PERF_COLS-1}; pSel={r:pSel.r,c:0}; }
+      else { pSel={r,c:0}; pSelEnd={r,c:PERF_COLS-1}; }
+      pRowSelMode=true; perfHighlight(); perfGrid.focus(); pDragging=true; e.preventDefault(); return;
+    }
+    const td = e.target.closest('#perf-tbody .kasa-td');
+    if (!td) { if (pEditCell) { perfExitEdit(); perfHighlight(); } return; }
+    if (pEditCell && pEditCell !== td) perfExitEdit();
+    pRowSelMode=false;
+    const r=+td.dataset.row, c=+td.dataset.col;
+    if (e.shiftKey && pSel) { pSelEnd={r,c}; } else { pSel={r,c}; pSelEnd=null; }
+    perfHighlight(); perfGrid.focus(); pDragging=true; e.preventDefault();
+  });
+
+  document.addEventListener('mouseover', e => {
+    if (!pDragging || !pSel) return;
+    if (pRowSelMode) {
+      const el = e.target.closest('#perf-tbody .kasa-row-num') || e.target.closest('#perf-tbody .kasa-td');
+      if (!el) return;
+      const tr = el.closest('tr'); const fd = tr.querySelector('.kasa-td'); if (!fd) return;
+      pSelEnd={r:+fd.dataset.row,c:PERF_COLS-1}; pSel={r:pSel.r,c:0};
+    } else {
+      const td = e.target.closest('#perf-tbody .kasa-td'); if (!td) return;
+      pSelEnd={r:+td.dataset.row,c:+td.dataset.col};
+    }
+    perfHighlight();
+  });
+
+  document.addEventListener('mouseup', () => { pDragging = false; });
+
+  perfGrid.addEventListener('dblclick', e => {
+    const td = e.target.closest('#perf-tbody .kasa-td');
+    if (!td) return;
+    pSel={r:+td.dataset.row,c:+td.dataset.col}; pSelEnd=null; perfHighlight(); perfEnterEdit(td,false);
+  });
+
+  perfGrid.addEventListener('keydown', e => {
+    if (pEditCell) {
+      if (e.key==='Escape') { e.preventDefault(); perfExitEdit(); perfHighlight(); perfGrid.focus(); }
+      else if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); perfExitEdit(); perfMoveSel(1,0,false); perfGrid.focus(); }
+      else if (e.key==='Tab') { e.preventDefault(); perfExitEdit(); perfMoveSel(0,e.shiftKey?-1:1,false); perfGrid.focus(); }
+      return;
+    }
+    if (!pSel) return;
+    if (e.ctrlKey||e.metaKey) {
+      if (e.key==='c') { e.preventDefault(); perfCopy(false); }
+      else if (e.key==='x') { e.preventDefault(); perfCopy(true); }
+      else if (e.key==='v') { e.preventDefault(); perfPaste(); }
+      else if (e.key.toLowerCase()==='a') {
+        e.preventDefault(); pRowSelMode=false;
+        pSel={r:0,c:0}; pSelEnd={r:Math.max(0,perfRowCount-1),c:PERF_COLS-1}; perfHighlight();
+      }
+      return;
+    }
+    const arrows={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
+    if (arrows[e.key]) { e.preventDefault(); perfMoveSel(...arrows[e.key],e.shiftKey); return; }
+    if (e.key==='Delete'||e.key==='Backspace') { e.preventDefault(); if(pRowSelMode) perfDeleteSelectedRows(); else perfClearSel(); return; }
+    if (e.key==='F2'||e.key==='Enter') { e.preventDefault(); perfEnterEdit(perfCell(pSel.r,pSel.c),false); return; }
+    if (e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey) perfEnterEdit(perfCell(pSel.r,pSel.c),true);
+  });
+
+  perfGrid.addEventListener('contextmenu', e => {
+    const numTd = e.target.closest('#perf-tbody .kasa-row-num');
+    if (!numTd) return;
+    e.preventDefault();
+    const fd = numTd.closest('tr').querySelector('.kasa-td');
+    if (!fd) return;
+    const r = +fd.dataset.row;
+    if (!pRowSelMode) { pSel={r,c:0}; pSelEnd={r,c:PERF_COLS-1}; pRowSelMode=true; perfHighlight(); }
+    pCtxTargetRow = r;
+    const menu = document.getElementById('perf-ctx-menu');
+    menu.style.display='block'; menu.style.left=e.clientX+'px'; menu.style.top=e.clientY+'px';
+    setTimeout(() => {
+      const rect=menu.getBoundingClientRect();
+      if(rect.right>window.innerWidth) menu.style.left=(e.clientX-rect.width)+'px';
+      if(rect.bottom>window.innerHeight) menu.style.top=(e.clientY-rect.height)+'px';
+    },0);
+  });
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="perf-ctx-menu" class="kasa-ctx-menu" style="display:none">
+      <div class="kasa-ctx-item" onclick="perfCtxInsertAbove()">&uarr; &Uuml;stüne Sat&#x131;r Ekle</div>
+      <div class="kasa-ctx-item" onclick="perfCtxInsertBelow()">&darr; Alt&#x131;na Sat&#x131;r Ekle</div>
+      <div class="kasa-ctx-separator"></div>
+      <div class="kasa-ctx-item" style="color:#f87171;" onclick="perfCtxDeleteRows()">&#x2715; Sat&#x131;r&#x131; Sil</div>
+    </div>`);
+
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('perf-ctx-menu');
+    if (menu && !menu.contains(e.target)) menu.style.display='none';
+  });
+
+  function perfCtxInsertAbove() {
+    document.getElementById('perf-ctx-menu').style.display='none';
+    if (pCtxTargetRow===null) return;
+    const r1=pSel?Math.min(pSel.r,(pSelEnd||pSel).r):pCtxTargetRow;
+    const refTd=perfCell(r1,0); if(!refTd) return;
+    const newTr=perfCreateRow();
+    document.getElementById('perf-tbody').insertBefore(newTr,refTd.closest('tr'));
+    perfRenumber(); pSel=null; pSelEnd=null; pRowSelMode=false; perfHighlight();
+  }
+
+  function perfCtxInsertBelow() {
+    document.getElementById('perf-ctx-menu').style.display='none';
+    if (pCtxTargetRow===null) return;
+    const r2=pSel?Math.max(pSel.r,(pSelEnd||pSel).r):pCtxTargetRow;
+    const refTd=perfCell(r2,0); if(!refTd) return;
+    const newTr=perfCreateRow();
+    document.getElementById('perf-tbody').insertBefore(newTr,refTd.closest('tr').nextSibling);
+    perfRenumber(); pSel=null; pSelEnd=null; pRowSelMode=false; perfHighlight();
+  }
+
+  function perfCtxDeleteRows() {
+    document.getElementById('perf-ctx-menu').style.display='none';
+    perfDeleteSelectedRows();
+  }
+
+  // ── PERFORMANS Save / Export / Import ─────────────────────────
+  function perfGetData() {
+    const rows=[];
+    document.querySelectorAll('#perf-tbody .kasa-row').forEach(row=>{
+      rows.push([...row.querySelectorAll('.kasa-td')].map(td=>td.textContent));
+    });
+    return rows;
+  }
+
+  function perfSave() {
+    localStorage.setItem('perf-data', JSON.stringify(perfGetData()));
+    const btn = document.querySelector('#perf-header-actions button');
+    const orig = btn.style.boxShadow;
+    btn.style.boxShadow = '0 0 24px rgba(34,211,238,0.8)';
+    setTimeout(()=>btn.style.boxShadow=orig, 800);
+  }
+
+  function perfExport() {
+    const rows=perfGetData();
+    const headers=['TARİH','HİSSE DEĞERİ','GÜNLÜK','HAFTALIK','AYLIK','YILLIK'];
+    const csv=[headers.join(','),...rows.map(r=>r.map(c=>`"${c.replace(/"/g,'""')}"`).join(','))].join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+    a.download='performans-'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  function perfImport(input) {
+    const file=input.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const lines=e.target.result.replace(/^\uFEFF/,'').split('\n').filter(l=>l.trim());
+      const dataLines=lines.slice(1);
+      const tbody=document.getElementById('perf-tbody');
+      tbody.innerHTML=''; perfRowCount=0;
+      dataLines.forEach(line=>{
+        const cols=line.split(',').map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+        const row=perfCreateRow();
+        row.querySelectorAll('.kasa-td').forEach((td,i)=>{ if(cols[i]!==undefined) td.textContent=cols[i]; });
+        tbody.appendChild(row);
+      });
+      perfRenumber(); pSel=null; pSelEnd=null; pRowSelMode=false; perfHighlight();
+    };
+    reader.readAsText(file,'utf-8'); input.value='';
+  }
+
+  (function perfLoadLocal() {
+    const saved=localStorage.getItem('perf-data'); if(!saved) return;
+    try {
+      const rows=JSON.parse(saved);
+      const tbody=document.getElementById('perf-tbody');
+      tbody.innerHTML=''; perfRowCount=0;
+      rows.forEach(cols=>{
+        const row=perfCreateRow();
+        row.querySelectorAll('.kasa-td').forEach((td,i)=>{ if(cols[i]!==undefined) td.textContent=cols[i]; });
+        tbody.appendChild(row);
+      });
+      perfRenumber();
+    } catch(e){}
+  })();
 
   // ── Auth init ─────────────────────────────────────────────────
   (async function sbInit() {
