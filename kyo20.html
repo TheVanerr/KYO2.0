@@ -464,7 +464,7 @@
           <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TUTAR</th>
           <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">İŞLEM</th>
           <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">KİŞİ</th>
-          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TUTAR</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold mono uppercase tracking-wider" style="color:#34d399">BAKİYE</th>
          </tr>
         </thead>
         <tbody id="kasa-tbody">
@@ -1112,7 +1112,25 @@
     return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  // Excel makrosu: F[i] = C[i] + F[i-1] (col-1=TUTAR girdi, col-4=kümülatif bakiye)
+  // Türkçe/İngilizce her iki format için güvenli sayı parser
+  function kasaParseNum(s) {
+    if (s == null || s === '') return 0;
+    let t = String(s).trim().replace(/[^\d,.\-]/g, '');
+    if (!t) return 0;
+    const lastComma = t.lastIndexOf(',');
+    const lastDot   = t.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // tr-TR: nokta=binlik, virgül=ondalık → 1.000,50 → 1000.50
+      t = t.replace(/\./g, '').replace(',', '.');
+    } else {
+      // en-US veya düz sayı: virgül=binlik → sil
+      t = t.replace(/,/g, '');
+    }
+    const n = parseFloat(t);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // Excel makrosu: BAKİYE[i] = TUTAR[i] + BAKİYE[i-1]
   function kasaRecalcBalance(fromIdx) {
     const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
     if (!fromIdx || fromIdx < 0) fromIdx = 0;
@@ -1120,7 +1138,7 @@
     if (fromIdx > 0) {
       const prevCells = allRows[fromIdx - 1].querySelectorAll('.kasa-td');
       const prevText = prevCells[4] ? prevCells[4].textContent.trim() : '';
-      if (prevText) prevBalance = sbParseNum(prevText);
+      if (prevText) prevBalance = kasaParseNum(prevText);
     }
     for (let i = fromIdx; i < allRows.length; i++) {
       const cells = allRows[i].querySelectorAll('.kasa-td');
@@ -1131,7 +1149,7 @@
         col4.textContent = '';
         prevBalance = 0;
       } else {
-        prevBalance = sbParseNum(val) + prevBalance;
+        prevBalance = kasaParseNum(val) + prevBalance;
         col4.textContent = kasaFmtBalance(prevBalance);
       }
     }
