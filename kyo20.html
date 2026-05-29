@@ -594,11 +594,13 @@
     <section id="page-paramla" class="page flex-col gap-6 w-full">
       <div class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-4">
         <div class="flex items-center justify-between gap-4 flex-wrap mb-3">
-          <div class="flex items-center gap-2"><i data-lucide="wallet" class="w-4 h-4 text-emerald-400"></i> <span class="label-tag mono">PARAMLA</span>
+          <div class="flex items-center gap-2">
+            <i data-lucide="wallet" class="w-4 h-4 text-emerald-400"></i>
+            <span class="label-tag mono">PARAMLA</span>
+            <button id="paramla-data-toggle-btn" onclick="paramlaToggleDataView()" class="paramla-tf-btn" style="margin-left:8px">Veri</button>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <button id="paramla-range-hourly" class="paramla-tf-btn active" onclick="paramlaSetRange('hourly')">SAATLİK</button>
-            <button id="paramla-range-daily" class="paramla-tf-btn" onclick="paramlaSetRange('daily')">GÜNLÜK</button>
+            <button id="paramla-range-daily" class="paramla-tf-btn active" onclick="paramlaSetRange('daily')">GÜNLÜK</button>
             <button id="paramla-range-weekly" class="paramla-tf-btn" onclick="paramlaSetRange('weekly')">HAFTALIK</button>
             <button id="paramla-range-yearly" class="paramla-tf-btn" onclick="paramlaSetRange('yearly')">YILLIK</button>
             <button id="paramla-refresh-btn" onclick="paramlaRefresh(true)" class="btn-refresh" style="padding:6px 10px;font-size:11px">
@@ -610,17 +612,40 @@
           <div class="mono" style="font-size:12px;color:#67e8f9">Toplam Değer: <span id="paramla-total" style="color:#e2e8f0;font-weight:700">0,00 TL</span></div>
           <div id="paramla-updated" class="mono" style="font-size:11px;color:#64748b">–</div>
         </div>
-        <div style="display:grid;grid-template-columns:minmax(320px,1fr) minmax(0,1.6fr);gap:14px;align-items:start;">
-          <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
-            <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#34d399;text-transform:uppercase;margin-bottom:10px">Anlık Dağılım</div>
-            <div style="position:relative;height:320px">
-              <canvas id="paramla-pie-canvas"></canvas>
+        <!-- Charts area -->
+        <div id="paramla-charts-area">
+          <div style="display:grid;grid-template-columns:minmax(320px,1fr) minmax(0,1.6fr);gap:14px;align-items:start;">
+            <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
+              <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#34d399;text-transform:uppercase;margin-bottom:10px">Anlık Dağılım</div>
+              <div style="position:relative;height:320px">
+                <canvas id="paramla-pie-canvas"></canvas>
+              </div>
+            </div>
+            <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
+              <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#22d3ee;text-transform:uppercase;margin-bottom:10px">Portföy Değer Grafiği (Günlük)</div>
+              <div style="position:relative;height:320px">
+                <canvas id="paramla-line-canvas"></canvas>
+              </div>
             </div>
           </div>
-          <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg p-4">
-            <div class="mono" style="font-size:11px;letter-spacing:.06em;color:#22d3ee;text-transform:uppercase;margin-bottom:10px">Portföy Değer Grafiği</div>
-            <div style="position:relative;height:320px">
-              <canvas id="paramla-line-canvas"></canvas>
+        </div>
+        <!-- Daily data table area -->
+        <div id="paramla-daily-area" style="display:none">
+          <div class="bg-slate-900/35 border border-slate-700/45 rounded-lg overflow-hidden">
+            <div class="mono px-4 py-3" style="font-size:11px;letter-spacing:.06em;color:#22d3ee;text-transform:uppercase;border-bottom:1px solid rgba(71,85,105,0.3)">Günlük Portföy Değeri</div>
+            <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead>
+                  <tr class="bg-slate-800/40">
+                    <th class="hisse-th dim" style="text-align:center;width:50px">#</th>
+                    <th class="hisse-th" style="text-align:left">TARİH</th>
+                    <th class="hisse-th" style="text-align:right">PORTFÖY DEĞERİ</th>
+                  </tr>
+                </thead>
+                <tbody id="paramla-daily-tbody">
+                  <tr><td colspan="3" class="mono" style="padding:24px 16px;text-align:center;color:#334155;font-size:13px">Veri yükleniyor…</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1151,6 +1176,8 @@
     if (!td) return;
     const raw = td.textContent.trim();
     if (!raw) return;
+    // Tarih formatı ise (GG.AA.YYYY veya G.A.YYYY vb.) formatlamayı atla
+    if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(raw)) return;
     // Sadece rakam, nokta, virgül, eksi içeriyorsa sayı olarak formatla
     if (!/^-?[\d.,\s]+$/.test(raw)) return;
     let t = raw.replace(/[^\d,.\-]/g, '');
@@ -2342,7 +2369,7 @@
     input.value = '';
   }
 
-  for (let i = 0; i < 15; i++) hsAddRow();
+  for (let i = 0; i < 30; i++) hsAddRow();
   hsSetView(false);
 
   (function() {
@@ -2369,10 +2396,12 @@
 
   // ── PARAMLA Live Portfolio ────────────────────────────────────
   const PARAMLA_REFRESH_MS = 30000;
-  var paramlaRange = 'hourly';
+  var paramlaRange = 'daily';
   var paramlaPieChart = null;
   var paramlaLineChart = null;
   var paramlaHistory = [];
+  var paramlaDaily = [];      // günlük log: [{ date:"DD.MM.YYYY", value: number|null }]
+  var paramlaDataView = false;
   var paramlaInterval = null;
   var paramlaRefreshBusy = false;
   var paramlaRefreshQueued = false;
@@ -2537,6 +2566,92 @@
     });
   }
 
+  // ── PARAMLA Günlük Log ────────────────────────────────────────
+  function paramlaFmtDateLog(d) {
+    return String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+  }
+  function paramlaParseDateLog(s) {
+    const m = String(s||'').trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (!m) return null;
+    const d = new Date(+m[3], +m[2]-1, +m[1]); d.setHours(0,0,0,0); return d;
+  }
+  function paramlaLoadDailyLog() {
+    try {
+      const raw = localStorage.getItem('paramla-daily-log');
+      paramlaDaily = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(paramlaDaily)) paramlaDaily = [];
+    } catch(e) { paramlaDaily = []; }
+  }
+  function paramlaSaveDailyLog() {
+    try { localStorage.setItem('paramla-daily-log', JSON.stringify(paramlaDaily)); } catch(e) {}
+  }
+  function paramlaInitDailyLog() {
+    paramlaLoadDailyLog();
+    const START = new Date(2026, 5, 1); // 01.06.2026
+    const today = new Date(); today.setHours(0,0,0,0);
+    const existing = new Set(paramlaDaily.map(e => e.date));
+    const d = new Date(START);
+    while (d <= today) {
+      const ds = paramlaFmtDateLog(new Date(d));
+      if (!existing.has(ds)) { paramlaDaily.push({ date: ds, value: null }); existing.add(ds); }
+      d.setDate(d.getDate() + 1);
+    }
+    paramlaDaily.sort((a, b) => {
+      const da = paramlaParseDateLog(a.date), db = paramlaParseDateLog(b.date);
+      return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+    });
+    paramlaSaveDailyLog();
+  }
+  function paramlaAutoRecordToday(total) {
+    if (!total || total <= 0) return;
+    const now = new Date();
+    if (now.getHours() < 19) return; // 19:00 sonrası borsa kapanış değeri
+    const todayStr = paramlaFmtDateLog(now);
+    const entry = paramlaDaily.find(e => e.date === todayStr);
+    if (entry && entry.value == null) {
+      entry.value = total;
+      paramlaSaveDailyLog();
+      paramlaRenderDailyTable();
+      paramlaRenderLine();
+    }
+  }
+  function paramlaRenderDailyTable() {
+    const tbody = document.getElementById('paramla-daily-tbody');
+    if (!tbody) return;
+    if (!paramlaDaily.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="mono" style="padding:24px 16px;text-align:center;color:#334155;font-size:13px">Henüz veri yok.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = paramlaDaily.map((e, i) => {
+      const valStr = e.value != null ? paramlaFmtMoney(e.value) + ' TL' : '–';
+      const valColor = e.value != null ? '#22d3ee' : '#334155';
+      return '<tr class="hisse-row">' +
+        '<td class="hisse-td mono" style="text-align:center;color:#334155">' + (i+1) + '</td>' +
+        '<td class="hisse-td mono" style="color:#67e8f9">' + e.date + '</td>' +
+        '<td class="hisse-td mono" style="text-align:right;color:' + valColor + ';font-weight:700">' + valStr + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+  function paramlaToggleDataView() {
+    paramlaDataView = !paramlaDataView;
+    const chartsEl = document.getElementById('paramla-charts-area');
+    const dailyEl  = document.getElementById('paramla-daily-area');
+    const rangeRow = document.querySelector('#page-paramla .flex.items-center.gap-2.flex-wrap');
+    const btn = document.getElementById('paramla-data-toggle-btn');
+    if (paramlaDataView) {
+      if (chartsEl) chartsEl.style.display = 'none';
+      if (dailyEl)  dailyEl.style.display  = 'block';
+      if (rangeRow) rangeRow.style.display  = 'none';
+      if (btn) { btn.classList.add('active'); }
+      paramlaRenderDailyTable();
+    } else {
+      if (chartsEl) chartsEl.style.display = 'block';
+      if (dailyEl)  dailyEl.style.display  = 'none';
+      if (rangeRow) rangeRow.style.display  = '';
+      if (btn) { btn.classList.remove('active'); }
+    }
+  }
+
   function paramlaLoadHistory() {
     try {
       const raw = localStorage.getItem('paramla-history-v1');
@@ -2595,20 +2710,32 @@
   function paramlaRenderLine() {
     const canvas = document.getElementById('paramla-line-canvas');
     if (!canvas || typeof Chart === 'undefined') return;
-    const series = paramlaSeriesForRange();
     if (paramlaLineChart) { paramlaLineChart.destroy(); paramlaLineChart = null; }
+
+    let labels, values;
+    if (paramlaRange === 'daily') {
+      // Günlük log'dan veri kullan (01.06.2026'dan itibaren)
+      const entries = paramlaDaily.filter(e => e.value != null);
+      labels = entries.map(e => e.date);
+      values = entries.map(e => e.value);
+    } else {
+      const series = paramlaSeriesForRange();
+      labels = series.labels;
+      values = series.values;
+    }
+
     paramlaLineChart = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: {
-        labels: series.labels,
+        labels: labels.length ? labels : ['Veri yok'],
         datasets: [{
           label: 'Portföy Değeri',
-          data: series.values,
+          data: values.length ? values : [0],
           borderColor: '#22d3ee',
           backgroundColor: 'rgba(34,211,238,0.16)',
           borderWidth: 2.6,
           tension: 0.28,
-          pointRadius: 2.2,
+          pointRadius: 3,
           fill: true,
         }]
       },
@@ -2616,17 +2743,14 @@
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(71,85,105,0.2)' } },
+          x: { ticks: { color: '#94a3b8', maxTicksLimit: 14, font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(71,85,105,0.2)' } },
           y: {
-            ticks: {
-              color: '#94a3b8',
-              callback: (v) => Number(v).toLocaleString('tr-TR')
-            },
+            ticks: { color: '#94a3b8', callback: (v) => Number(v).toLocaleString('tr-TR'), font: { family: 'JetBrains Mono', size: 10 } },
             grid: { color: 'rgba(71,85,105,0.2)' }
           }
         },
         plugins: {
-          legend: { labels: { color: '#cbd5e1' } },
+          legend: { labels: { color: '#cbd5e1', font: { family: 'JetBrains Mono', size: 11 } } },
           tooltip: {
             callbacks: {
               label: (ctx) => `${ctx.dataset.label}: ${paramlaFmtMoney(ctx.raw || 0)} TL`,
@@ -2639,7 +2763,7 @@
 
   function paramlaSetRange(range) {
     paramlaRange = range;
-    ['hourly','daily','weekly','yearly'].forEach(r => {
+    ['daily','weekly','yearly'].forEach(r => {
       const btn = document.getElementById('paramla-range-' + r);
       if (!btn) return;
       btn.classList.toggle('active', r === range);
@@ -2689,6 +2813,7 @@
       paramlaRenderTable(rows, total);
       paramlaRenderPie(rows);
       paramlaAppendHistory(total);
+      paramlaAutoRecordToday(total);
       paramlaRenderLine();
     } catch (e) {
       const upd = document.getElementById('paramla-updated');
@@ -2703,6 +2828,8 @@
     if (!paramlaAutoEnabled) {
       paramlaAutoEnabled = true;
       paramlaLoadHistory();
+      paramlaInitDailyLog();
+      paramlaRenderDailyTable();
       paramlaSetRange(paramlaRange);
       paramlaRefresh(true);
       paramlaInterval = setInterval(() => { paramlaRefresh(); }, PARAMLA_REFRESH_MS);
