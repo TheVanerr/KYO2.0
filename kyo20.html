@@ -376,10 +376,20 @@
       <div class="ml-1">
        <h1 class="text-lg font-bold text-white tracking-tight">KYO 2.0</h1>
       </div>
+      <div id="header-bakiye-card" class="flex flex-col items-center justify-center px-3 py-1 rounded-lg border mono" style="border-color:rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);box-shadow:0 0 12px rgba(34,211,238,0.18);margin-left:12px;min-width:120px">
+       <div style="font-size:9px;letter-spacing:.07em;color:#67e8f9;text-transform:uppercase;margin-bottom:1px">Anlık Bakiye</div>
+       <div id="header-bakiye-val" style="font-size:12px;font-weight:700;color:#e2e8f0">–</div>
+      </div>
       <div id="ort-view-toggle-wrap" style="display:none;margin-left:10px">
        <button id="ort-view-toggle" onclick="ortToggleView()" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07);box-shadow:0 0 10px rgba(52,211,153,0.15);min-width:5.5rem" onmouseover="this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)'">
         <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>
        </button>
+      </div>
+      <div id="ort-sermaye-card" style="display:none;margin-left:10px">
+       <div class="flex flex-col items-center justify-center px-3 py-1 rounded-lg border mono" style="border-color:rgba(167,139,250,0.35);background:rgba(167,139,250,0.07);box-shadow:0 0 12px rgba(167,139,250,0.18);min-width:120px">
+        <div style="font-size:9px;letter-spacing:.07em;color:#c4b5fd;text-transform:uppercase;margin-bottom:1px">Sermaye</div>
+        <div id="ort-sermaye-val" style="font-size:12px;font-weight:700;color:#e2e8f0">–</div>
+       </div>
       </div>
       <div id="hs-view-toggle-wrap" style="display:none;margin-left:10px">
        <button id="hs-view-toggle" onclick="hsToggleView()" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07);box-shadow:0 0 10px rgba(52,211,153,0.15);min-width:5.5rem" onmouseover="this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)'">
@@ -1158,6 +1168,7 @@
       document.getElementById('ort-header-actions').style.display = target === 'ortaklik' ? 'flex' : 'none';
       document.getElementById('hs-header-actions').style.display = target === 'hs' ? 'flex' : 'none';
       document.getElementById('ort-view-toggle-wrap').style.display = target === 'ortaklik' ? 'block' : 'none';
+      document.getElementById('ort-sermaye-card').style.display = target === 'ortaklik' ? 'block' : 'none';
       document.getElementById('hs-view-toggle-wrap').style.display = target === 'hs' ? 'block' : 'none';
       document.getElementById('perf-view-toggle-wrap').style.display = target === 'performans' ? 'block' : 'none';
       document.getElementById('hisse-header-actions').style.display = target === 'hisse' ? 'flex' : 'none';
@@ -1306,6 +1317,7 @@
         col4.textContent = kasaFmtBalance(prevBalance);
       }
     }
+    updateHeaderBakiye();
   }
 
   function kasaHighlight() {
@@ -2814,6 +2826,7 @@
       paramlaRenderPie(rows);
       paramlaAppendHistory(total);
       paramlaAutoRecordToday(total);
+      perfAutoRecord19(total);
       paramlaRenderLine();
     } catch (e) {
       const upd = document.getElementById('paramla-updated');
@@ -3958,6 +3971,7 @@
       if (cells[sermayeIdx]) cells[sermayeIdx].textContent = ortFmtMoney(cumulative);
     });
     if (ortChartMode) ortRenderChart();
+    updateOrtSermayeCard();
   }
 
   function ortIsComputedCol(c) {
@@ -5480,6 +5494,63 @@
   })();
 
   perfAutoFillAndExtend();
+
+  // ── Global utility: header cards & Performans auto-record ────
+  function getKasaLastBakiye() {
+    const rows = [...document.querySelectorAll('#kasa-tbody .kasa-row')].reverse();
+    for (const row of rows) {
+      const td = row.querySelector('.kasa-td[data-col="4"]');
+      if (td && td.textContent.trim()) return kasaParseNum(td.textContent.trim());
+    }
+    return 0;
+  }
+
+  function getOrtLastSermaye() {
+    const sermayeIdx = (typeof ortColumns !== 'undefined') ? ortColumns.length - 2 : 7;
+    const rows = [...document.querySelectorAll('#ort-tbody .ort-row')].reverse();
+    for (const row of rows) {
+      const cells = row.querySelectorAll('.ort-td');
+      if (cells[sermayeIdx] && cells[sermayeIdx].textContent.trim()) {
+        return ortParseInputNum(cells[sermayeIdx].textContent.trim());
+      }
+    }
+    return 0;
+  }
+
+  function updateHeaderBakiye() {
+    const card = document.getElementById('header-bakiye-val');
+    if (!card) return;
+    const val = getKasaLastBakiye();
+    card.textContent = val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
+  }
+
+  function updateOrtSermayeCard() {
+    const el = document.getElementById('ort-sermaye-val');
+    if (!el) return;
+    const val = getOrtLastSermaye();
+    el.textContent = val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
+  }
+
+  function perfAutoRecord19(paramlaTotal) {
+    if (!paramlaTotal || paramlaTotal <= 0) return;
+    const now = new Date();
+    if (now.getHours() < 19) return;
+    const todayStr = perfFmtDate(now);
+    const rows = [...document.querySelectorAll('#perf-tbody .kasa-row')];
+    const todayRow = rows.find(row => {
+      const td = row.querySelector('.kasa-td[data-col="0"]');
+      return td && td.textContent.trim() === todayStr;
+    });
+    if (!todayRow) return;
+    const hisseTd = todayRow.querySelector('.kasa-td[data-col="1"]');
+    if (!hisseTd || hisseTd.textContent.trim()) return;
+    const bakiye = getKasaLastBakiye();
+    const sermaye = getOrtLastSermaye();
+    if (!sermaye) return;
+    const hisseVal = (bakiye + paramlaTotal) / sermaye;
+    hisseTd.textContent = hisseVal.toLocaleString('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    perfSave();
+  }
 
   // ── Auth init ─────────────────────────────────────────────────
   (async function sbInit() {
