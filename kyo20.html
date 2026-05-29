@@ -3,7 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Elektrik Panosu IO Listesi</title>
+  <title>KYO 2.0</title>
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
@@ -112,6 +112,30 @@
     background: rgba(30, 41, 59, 0.35);
   }
   #kasa-table tr:hover td:focus {
+    background: rgba(91, 33, 182, 0.12) !important;
+  }
+  #perf-table {
+    border-collapse: collapse;
+  }
+  #perf-table th {
+    border: 1px solid rgba(71, 85, 105, 0.4);
+  }
+  #perf-table td {
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    outline: none;
+    cursor: default;
+    transition: background 0.12s ease, box-shadow 0.12s ease;
+  }
+  #perf-table td:focus {
+    background: rgba(91, 33, 182, 0.12) !important;
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.55);
+    position: relative;
+    z-index: 1;
+  }
+  #perf-table tr:hover td {
+    background: rgba(30, 41, 59, 0.35);
+  }
+  #perf-table tr:hover td:focus {
     background: rgba(91, 33, 182, 0.12) !important;
   }
   #sidebar {
@@ -303,6 +327,16 @@
   #hs-grid { outline: none; }
   #hs-row-count::-webkit-outer-spin-button, #hs-row-count::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   #hs-row-count { -moz-appearance: textfield; appearance: textfield; }
+  #perf-row-count::-webkit-outer-spin-button, #perf-row-count::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #perf-row-count { -moz-appearance: textfield; appearance: textfield; }
+  #perf-sel-overlay {
+    position: absolute;
+    pointer-events: none;
+    border: 2px solid rgba(192,132,252,0.95);
+    box-shadow: 0 0 10px rgba(167,139,250,0.6), 0 0 22px rgba(109,40,217,0.35);
+    z-index: 10;
+    display: none;
+  }
   .hs-td { cursor: default; user-select: none; caret-color: transparent; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .hs-td[contenteditable="true"] { cursor: text; user-select: text; caret-color: #c4b5fd; }
   .hs-td.hs-anchor { background: rgba(109,40,217,.28); border-color: rgba(167,139,250,.45) !important; }
@@ -349,6 +383,11 @@
       </div>
       <div id="hs-view-toggle-wrap" style="display:none;margin-left:10px">
        <button id="hs-view-toggle" onclick="hsToggleView()" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07);box-shadow:0 0 10px rgba(52,211,153,0.15);min-width:5.5rem" onmouseover="this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)'">
+        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>
+       </button>
+      </div>
+      <div id="perf-view-toggle-wrap" style="display:none;margin-left:10px">
+       <button id="perf-view-toggle" onclick="perfToggleView()" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold mono transition-all" style="color:#34d399;border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.07);box-shadow:0 0 10px rgba(52,211,153,0.15);min-width:5.5rem" onmouseover="this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)'" onmouseout="this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)'">
         <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>
        </button>
       </div>
@@ -476,7 +515,7 @@
           <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">TUTAR</th>
           <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">İŞLEM</th>
           <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">KİŞİ</th>
-          <th class="px-4 py-3 text-center text-xs font-semibold mono uppercase tracking-wider" style="color:#34d399">BAKİYE</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-cyan-400 mono uppercase tracking-wider">BAKİYE</th>
          </tr>
         </thead>
         <tbody id="kasa-tbody">
@@ -706,6 +745,7 @@
     </section>
     <!-- PERFORMANS PAGE -->
     <section id="page-performans" class="page flex-col gap-6 w-full">
+     <div id="perf-table-view">
      <div id="perf-grid" tabindex="0" class="bg-slate-900/40 border border-slate-700/50 rounded-xl overflow-hidden" style="outline:none">
       <div class="overflow-x-auto" style="position:relative">
        <div id="perf-sel-overlay"></div>
@@ -740,6 +780,17 @@
       <span>Satır Ekle</span>
       <input id="perf-row-count" type="number" min="1" value="1" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.stopPropagation();perfAddRows();}" class="w-12 px-1 py-0.5 rounded text-xs font-semibold mono text-center bg-transparent border" style="color:#a78bfa;border:1px solid rgba(139,92,246,0.5);outline:none;" />
      </button>
+     </div>
+     <div id="perf-chart-view" style="display:none" class="flex flex-col gap-4">
+      <div class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-5">
+       <div class="mono mb-3" style="font-size:11px;letter-spacing:.06em;color:#34d399;text-transform:uppercase">Hisse Değeri Grafiği</div>
+       <div style="position:relative;height:320px"><canvas id="perf-value-canvas"></canvas></div>
+      </div>
+      <div class="bg-slate-900/40 border border-slate-700/50 rounded-xl p-5">
+       <div class="mono mb-3" style="font-size:11px;letter-spacing:.06em;color:#22d3ee;text-transform:uppercase">Performans Değişimi (%)</div>
+       <div style="position:relative;height:260px"><canvas id="perf-change-canvas"></canvas></div>
+      </div>
+     </div>
     </section>
    </main><!-- Bottom-Left Navigation -->
    <nav class="fixed bottom-4 left-4 z-50">
@@ -1083,6 +1134,7 @@
       document.getElementById('hs-header-actions').style.display = target === 'hs' ? 'flex' : 'none';
       document.getElementById('ort-view-toggle-wrap').style.display = target === 'ortaklik' ? 'block' : 'none';
       document.getElementById('hs-view-toggle-wrap').style.display = target === 'hs' ? 'block' : 'none';
+      document.getElementById('perf-view-toggle-wrap').style.display = target === 'performans' ? 'block' : 'none';
       document.getElementById('hisse-header-actions').style.display = target === 'hisse' ? 'flex' : 'none';
       document.getElementById('perf-header-actions').style.display = target === 'performans' ? 'flex' : 'none';
       if (target === 'hisse') hisseOnActivate();
@@ -1093,6 +1145,29 @@
   });
 
 
+
+  // ── Otomatik sayı formatı (tüm tablolar için) ─────────────────
+  function autoFmtNumCell(td) {
+    if (!td) return;
+    const raw = td.textContent.trim();
+    if (!raw) return;
+    // Sadece rakam, nokta, virgül, eksi içeriyorsa sayı olarak formatla
+    if (!/^-?[\d.,\s]+$/.test(raw)) return;
+    let t = raw.replace(/[^\d,.\-]/g, '');
+    if (!t) return;
+    const lastComma = t.lastIndexOf(',');
+    const lastDot   = t.lastIndexOf('.');
+    let n;
+    if (lastComma > lastDot) {
+      // tr-TR formatı: 1.000,50 → nokta binlik, virgül ondalık
+      n = parseFloat(t.replace(/\./g, '').replace(',', '.'));
+    } else {
+      // düz sayı veya en-US: virgülü kaldır
+      n = parseFloat(t.replace(/,/g, ''));
+    }
+    if (!isFinite(n)) return;
+    td.textContent = n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 
   // ── KASA Spreadsheet ───────────────────────────────────────────
   const KASA_COLS = 5;
@@ -1140,7 +1215,7 @@
     tbody.appendChild(kasaCreateRow());
     kasaRenumberRows();
   }
-  for (let i = 0; i < 15; i++) kasaAddRow();
+  for (let i = 0; i < 100; i++) kasaAddRow();
 
   function kasaAddRows() {
     const input = document.getElementById('kasa-row-count');
@@ -1279,6 +1354,7 @@
     const _editedTr  = kEditCell.closest('tr');
     kEditCell.contentEditable = 'false';
     kEditCell.classList.remove('kasa-editing');
+    autoFmtNumCell(kEditCell);
     kEditCell = null;
     if (_editedCol === 1 && _editedTr) {
       const allRows = Array.from(document.querySelectorAll('#kasa-tbody .kasa-row'));
@@ -2011,6 +2087,7 @@
     if (!hEditCell) return;
     hEditCell.contentEditable = 'false';
     hEditCell.classList.remove('hs-editing');
+    autoFmtNumCell(hEditCell);
     hEditCell = null;
     hsRecalcAll();
   }
@@ -3684,7 +3761,7 @@
   // ── ORTAKLIK Spreadsheet ───────────────────────────────────────
   // Korunan: index 0 (TARİH), son-2 (SERMAYE), son-1 (TUTAR)
   // Silinebilir: index 1 .. length-3 (C-H arası kişi sütunları)
-  let ortColumns = ['TAR\u0130H','MER\u0130\u00c7','FAT\u0130H','MERTCAN','MERT CAN','AS\u0130YE','ERK\u0130N','SERMAYE','TUTAR'];
+  let ortColumns = ['TAR\u0130H','KGS','TheVaner','MERTCAN','MERT CAN','AS\u0130YE','ERK\u0130N','SERMAYE','TUTAR'];
   let ortRowCount = 0;
   let oSel = null, oSelEnd = null, oEditCell = null;
   let oClip = null, oCutCells = [];
@@ -3728,7 +3805,7 @@
   function ortGetCalcIndexes() {
     const sermayeIdx = ortColumns.length - 2;
     const tutarIdx = ortColumns.length - 1;
-    const wanted = new Set(['MERIC', 'FATIH', 'MERTCAN', 'MERT CAN', 'ASIYE', 'ERKIN']);
+    const wanted = new Set(['KGS', 'THEVANER', 'MERTCAN', 'MERT CAN', 'ASIYE', 'ERKIN']);
     const srcIdx = [];
     for (let i = 1; i < sermayeIdx; i++) {
       if (wanted.has(ortNormColName(ortColumns[i]))) srcIdx.push(i);
@@ -3872,6 +3949,7 @@
     if(!oEditCell) return;
     oEditCell.contentEditable='false';
     oEditCell.classList.remove('ort-editing');
+    autoFmtNumCell(oEditCell);
     oEditCell=null;
     ortRecalcFinancials();
   }
@@ -4800,7 +4878,7 @@
     document.getElementById('perf-tbody').appendChild(perfCreateRow());
     perfRenumber();
   }
-  for (let i = 0; i < 15; i++) perfAddRow();
+  for (let i = 0; i < 30; i++) perfAddRow();
 
   function perfAddRows() {
     const n = Math.max(1, parseInt(document.getElementById('perf-row-count').value) || 1);
@@ -4875,6 +4953,7 @@
     if (!pEditCell) return;
     pEditCell.contentEditable = 'false';
     pEditCell.classList.remove('kasa-editing');
+    autoFmtNumCell(pEditCell);
     pEditCell = null;
   }
 
@@ -5058,7 +5137,161 @@
     perfDeleteSelectedRows();
   }
 
-  // ── PERFORMANS Save / Export / Import ─────────────────────────
+  // ── PERFORMANS Grafik / Veri toggle ────────────────────────────
+  var perfChartMode = false;
+  var perfValueChart = null;
+  var perfChangeChart = null;
+
+  function perfFmtDate(d) {
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
+  }
+
+  function perfParseDate(s) {
+    const m = String(s||'').trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (!m) return null;
+    const d = new Date(+m[3], +m[2]-1, +m[1]);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function perfParseNum(s) {
+    if (!s || !String(s).trim()) return null;
+    let t = String(s).trim().replace(/[^\d,.\-]/g,'');
+    if (!t) return null;
+    const lastComma = t.lastIndexOf(','), lastDot = t.lastIndexOf('.');
+    if (lastComma > lastDot) t = t.replace(/\./g,'').replace(',','.');
+    else t = t.replace(/,/g,'');
+    const n = parseFloat(t);
+    return isNaN(n) ? null : n;
+  }
+
+  function perfToggleView() {
+    perfChartMode = !perfChartMode;
+    const tv  = document.getElementById('perf-table-view');
+    const cv  = document.getElementById('perf-chart-view');
+    const btn = document.getElementById('perf-view-toggle');
+    if (perfChartMode) {
+      tv.style.display = 'none';
+      cv.style.display = 'block';
+      btn.innerHTML = '<i data-lucide="table-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Veriye Dön</span>';
+      btn.style.color='#a78bfa'; btn.style.borderColor='rgba(167,139,250,0.4)'; btn.style.background='rgba(167,139,250,0.07)'; btn.style.boxShadow='0 0 10px rgba(167,139,250,0.15)';
+      btn.onmouseover=function(){this.style.boxShadow='0 0 18px rgba(167,139,250,0.45)';this.style.borderColor='rgba(167,139,250,0.75)';};
+      btn.onmouseout=function(){this.style.boxShadow='0 0 10px rgba(167,139,250,0.15)';this.style.borderColor='rgba(167,139,250,0.4)';};
+      lucide.createIcons();
+      perfRenderChart();
+    } else {
+      cv.style.display = 'none';
+      tv.style.display = 'block';
+      btn.innerHTML = '<i data-lucide="bar-chart-2" class="w-3.5 h-3.5 flex-shrink-0"></i><span>Grafik</span>';
+      btn.style.color='#34d399'; btn.style.borderColor='rgba(52,211,153,0.4)'; btn.style.background='rgba(52,211,153,0.07)'; btn.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';
+      btn.onmouseover=function(){this.style.boxShadow='0 0 18px rgba(52,211,153,0.45)';this.style.borderColor='rgba(52,211,153,0.75)';};
+      btn.onmouseout=function(){this.style.boxShadow='0 0 10px rgba(52,211,153,0.15)';this.style.borderColor='rgba(52,211,153,0.4)';};
+      lucide.createIcons();
+    }
+  }
+
+  function perfRenderChart() {
+    const rows = [...document.querySelectorAll('#perf-tbody .kasa-row')];
+    const labels = [], vals = [], daily = [], weekly = [], monthly = [], yearly = [];
+    rows.forEach(row => {
+      const tds = [...row.querySelectorAll('.kasa-td')];
+      const lbl = tds[0] ? tds[0].textContent.trim() : '';
+      if (!lbl) return;
+      labels.push(lbl);
+      vals.push(perfParseNum(tds[1]?.textContent));
+      daily.push(perfParseNum(tds[2]?.textContent));
+      weekly.push(perfParseNum(tds[3]?.textContent));
+      monthly.push(perfParseNum(tds[4]?.textContent));
+      yearly.push(perfParseNum(tds[5]?.textContent));
+    });
+
+    const chartDefaults = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color:'#94a3b8', font:{size:11,family:'JetBrains Mono'} } }, tooltip: { mode:'index', intersect:false } },
+      scales: {
+        x: { ticks:{ color:'#64748b', font:{size:10,family:'JetBrains Mono'}, maxTicksLimit:12 }, grid:{ color:'rgba(71,85,105,0.2)' } },
+        y: { ticks:{ color:'#64748b', font:{size:10,family:'JetBrains Mono'} }, grid:{ color:'rgba(71,85,105,0.2)' } }
+      }
+    };
+
+    // Value chart
+    if (perfValueChart) { perfValueChart.destroy(); perfValueChart = null; }
+    const vc = document.getElementById('perf-value-canvas');
+    if (vc) {
+      perfValueChart = new Chart(vc, {
+        type: 'line',
+        data: { labels, datasets: [{
+          label: 'Hisse Değeri',
+          data: vals,
+          borderColor: 'rgba(34,211,238,0.9)',
+          backgroundColor: 'rgba(34,211,238,0.12)',
+          fill: true, tension: 0.35, pointRadius: 3,
+          pointBackgroundColor: 'rgba(34,211,238,1)',
+          borderWidth: 2,
+        }]},
+        options: { ...chartDefaults }
+      });
+    }
+
+    // Change chart (günlük/haftalık/aylık/yıllık)
+    if (perfChangeChart) { perfChangeChart.destroy(); perfChangeChart = null; }
+    const cc = document.getElementById('perf-change-canvas');
+    if (cc) {
+      perfChangeChart = new Chart(cc, {
+        type: 'bar',
+        data: { labels, datasets: [
+          { label:'Günlük',  data:daily,   backgroundColor:'rgba(167,139,250,0.6)', borderColor:'rgba(167,139,250,1)', borderWidth:1, borderRadius:3 },
+          { label:'Haftalık',data:weekly,  backgroundColor:'rgba(52,211,153,0.6)',  borderColor:'rgba(52,211,153,1)',  borderWidth:1, borderRadius:3 },
+          { label:'Aylık',   data:monthly, backgroundColor:'rgba(251,146,60,0.6)',  borderColor:'rgba(251,146,60,1)',  borderWidth:1, borderRadius:3 },
+          { label:'Yıllık',  data:yearly,  backgroundColor:'rgba(244,114,182,0.6)', borderColor:'rgba(244,114,182,1)', borderWidth:1, borderRadius:3 },
+        ]},
+        options: { ...chartDefaults }
+      });
+    }
+  }
+
+  // ── PERFORMANS Otomatik Tarih & Günlük Satır Ekleme ────────────
+  function perfAutoFillAndExtend() {
+    const START = new Date(2026, 5, 1); // 01.06.2026
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tbody = document.getElementById('perf-tbody');
+    const rows = [...tbody.querySelectorAll('.kasa-row')];
+
+    // Mevcut boş tarih hücrelerini doldur
+    rows.forEach((row, i) => {
+      const td = row.querySelector('.kasa-td[data-col="0"]');
+      if (td && !td.textContent.trim()) {
+        const d = new Date(START); d.setDate(START.getDate() + i);
+        td.textContent = perfFmtDate(d);
+      }
+    });
+
+    // Son tarihi bul
+    let lastDate = null;
+    tbody.querySelectorAll('.kasa-row').forEach(row => {
+      const td = row.querySelector('.kasa-td[data-col="0"]');
+      if (td) {
+        const d = perfParseDate(td.textContent);
+        if (d && (!lastDate || d > lastDate)) lastDate = d;
+      }
+    });
+
+    // Bugün > son tarih ise eksik günleri ekle
+    if (lastDate && today > lastDate) {
+      const next = new Date(lastDate);
+      next.setDate(next.getDate() + 1);
+      while (next <= today) {
+        const newRow = perfCreateRow();
+        const td = newRow.querySelector('.kasa-td[data-col="0"]');
+        if (td) td.textContent = perfFmtDate(new Date(next));
+        tbody.appendChild(newRow);
+        next.setDate(next.getDate() + 1);
+      }
+      perfRenumber();
+    }
+  }
   function perfGetData() {
     const rows=[];
     document.querySelectorAll('#perf-tbody .kasa-row').forEach(row=>{
@@ -5118,6 +5351,8 @@
       perfRenumber();
     } catch(e){}
   })();
+
+  perfAutoFillAndExtend();
 
   // ── Auth init ─────────────────────────────────────────────────
   (async function sbInit() {

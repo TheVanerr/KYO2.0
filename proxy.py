@@ -16,6 +16,7 @@ import threading
 import time
 import json
 import re
+import os
 
 # ── Yahoo Finance crumb cache ─────────────────────────────────────
 _yahoo_lock    = threading.Lock()
@@ -133,6 +134,34 @@ class CORSProxyHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        path = self.path.split('?')[0].rstrip('/')
+
+        # ── Statik dosya sunumu ───────────────────────────────────
+        static_map = {
+            '':           'kyo20.html',
+            '/':          'kyo20.html',
+            '/index.html':'index.html',
+            '/kyo20.html':'kyo20.html',
+        }
+        if path in static_map or self.path in static_map:
+            filename = static_map.get(path) or static_map.get(self.path)
+            filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+            try:
+                with open(filepath, 'rb') as f:
+                    data = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(data)))
+                self._cors()
+                self.end_headers()
+                self.wfile.write(data)
+            except FileNotFoundError:
+                self.send_response(404)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(b'Dosya bulunamadi')
+            return
+
         path = self.path
 
         # ── Ozel endpoint: /hisse-batch?syms=... ─────────────────
