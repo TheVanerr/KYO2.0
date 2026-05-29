@@ -5532,6 +5532,53 @@
     el.textContent = val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
   }
 
+  function perfParseHisseVal(s) {
+    if (!s) return NaN;
+    return parseFloat(String(s).replace(/[+%\s]/g,'').replace(/\./g,'').replace(',','.'));
+  }
+
+  function perfFindRefVal(dateValMap, targetTime, curTime, toleranceDays) {
+    const tol = toleranceDays * 86400000;
+    let best = null, bestDiff = Infinity;
+    for (const [t, v] of dateValMap) {
+      if (t >= curTime) continue;
+      const diff = Math.abs(t - targetTime);
+      if (diff <= tol && diff < bestDiff) { bestDiff = diff; best = v; }
+    }
+    return best;
+  }
+
+  function perfCalcAndWriteChanges() {
+    const rows = [...document.querySelectorAll('#perf-tbody .kasa-row')];
+    const dateValMap = new Map();
+    rows.forEach(row => {
+      const d = perfParseDate(row.querySelector('.kasa-td[data-col="0"]')?.textContent.trim());
+      const v = perfParseHisseVal(row.querySelector('.kasa-td[data-col="1"]')?.textContent.trim());
+      if (d && !isNaN(v) && v > 0) dateValMap.set(d.getTime(), v);
+    });
+    const MS = 86400000;
+    // offset (gün) ve tolerans (gün): günlük, haftalık, aylık, yıllık
+    const periods = [{off:1,tol:3},{off:7,tol:3},{off:30,tol:7},{off:365,tol:30}];
+    rows.forEach(row => {
+      const d = perfParseDate(row.querySelector('.kasa-td[data-col="0"]')?.textContent.trim());
+      const v = perfParseHisseVal(row.querySelector('.kasa-td[data-col="1"]')?.textContent.trim());
+      if (!d || isNaN(v) || v <= 0) return;
+      const t = d.getTime();
+      periods.forEach(({off, tol}, i) => {
+        const ref = perfFindRefVal(dateValMap, t - off * MS, t, tol);
+        const td = row.querySelector(`.kasa-td[data-col="${i+2}"]`);
+        if (!td) return;
+        if (ref != null && ref > 0) {
+          const pct = (v - ref) / ref * 100;
+          td.textContent = (pct >= 0 ? '+' : '') + pct.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
+        } else {
+          td.textContent = '';
+        }
+      });
+    });
+    perfSave();
+  }
+
   function perfAutoRecord19(paramlaTotal) {
     if (!paramlaTotal || paramlaTotal <= 0) return;
     const now = new Date();
@@ -5550,7 +5597,7 @@
     if (!sermaye) return;
     const hisseVal = (bakiye + paramlaTotal) / sermaye;
     hisseTd.textContent = hisseVal.toLocaleString('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
-    perfSave();
+    perfCalcAndWriteChanges();
   }
 
   // ── Auth init ─────────────────────────────────────────────────
